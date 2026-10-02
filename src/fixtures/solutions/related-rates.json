@@ -1,0 +1,59 @@
+{
+  "status": "solved",
+  "clarification_question": "",
+  "problem": {
+    "restated_latex": "x^2+y^2=25,\\quad \\frac{dx}{dt}=1,\\quad x=3",
+    "topic_id": "related-rates",
+    "problem_type": "related rates; sliding ladder"
+  },
+  "strategy": {
+    "method": "Differentiate the Pythagorean relation with respect to time",
+    "why_this_method": "The wall, ground, and fixed ladder form a right triangle whose changing legs are linked by one equation.",
+    "alternatives": "Solving for y first also works, but implicit differentiation keeps the rates visible."
+  },
+  "steps": [
+    {
+      "title": "Define the changing quantities",
+      "rule": "Related-rates setup",
+      "latex": "x=\\text{base distance},\\quad y=\\text{top height},\\quad x^2+y^2=5^2",
+      "explanation": "Both legs change with time, while the ladder length remains 5 metres. The Pythagorean relation connects the two rates.",
+      "common_mistake": "Do not treat x or y as constant when differentiating in time."
+    },
+    {
+      "title": "Find the height at the stated instant",
+      "rule": "Pythagorean theorem",
+      "latex": "3^2+y^2=25\\implies y=4",
+      "explanation": "The positive root is used because y is a physical height. This gives the missing instantaneous value.",
+      "common_mistake": ""
+    },
+    {
+      "title": "Differentiate with respect to time",
+      "rule": "Implicit differentiation",
+      "latex": "2x\\frac{dx}{dt}+2y\\frac{dy}{dt}=0",
+      "explanation": "Each changing variable contributes a chain-rule rate factor. The derivative of the fixed ladder length is zero.",
+      "common_mistake": "Include dx/dt and dy/dt after differentiating x squared and y squared."
+    },
+    {
+      "title": "Substitute the instant and solve for the vertical rate",
+      "rule": "Algebra",
+      "latex": "2(3)(1)+2(4)\\frac{dy}{dt}=0\\implies\\frac{dy}{dt}=-\\frac34\\text{ m/s}",
+      "explanation": "Insert values only after differentiating, then isolate the requested rate. The negative sign means the height is decreasing.",
+      "common_mistake": "A downward velocity must be reported with its direction or negative sign."
+    }
+  ],
+  "final_answer": {
+    "latex": "\\boxed{\\frac34\\text{ m/s downward}}",
+    "plain": "The top is falling at three quarters of a metre per second.",
+    "domain_notes": "At this instant the signed vertical rate is -3/4 m/s."
+  },
+  "check": {
+    "method": "substituted both rates into the differentiated constraint",
+    "result": "passed",
+    "detail": "2(3)(1) + 2(4)(-3/4) equals zero."
+  },
+  "hints": [
+    "Connect the two changing distances with the fixed ladder length.",
+    "Differentiate x squared plus y squared equals 25 with respect to time.",
+    "When x = 3, the triangle gives y = 4."
+  ]
+}

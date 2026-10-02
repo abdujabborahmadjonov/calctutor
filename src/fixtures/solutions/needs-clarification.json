@@ -1,0 +1,26 @@
+{
+  "status": "needs_clarification",
+  "clarification_question": "What is the upper bound of the definite integral?",
+  "problem": {
+    "restated_latex": "\\int_0^{?}x^2\\,dx",
+    "topic_id": "riemann-ftc",
+    "problem_type": "incomplete definite integral"
+  },
+  "strategy": {
+    "method": "",
+    "why_this_method": "",
+    "alternatives": ""
+  },
+  "steps": [],
+  "final_answer": {
+    "latex": "",
+    "plain": "",
+    "domain_notes": ""
+  },
+  "check": {
+    "method": "",
+    "result": "not_applicable",
+    "detail": "The problem is missing a required bound."
+  },
+  "hints": []
+}

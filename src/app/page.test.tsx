@@ -1,19 +1,28 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("@/lib/storage/history", () => ({
+  getSetting: vi.fn().mockResolvedValue(undefined),
+  saveHistoryEntry: vi.fn().mockResolvedValue(undefined),
+  setSetting: vi.fn().mockResolvedValue(undefined),
+}));
 
 import Home from "./page";
 
 describe("Home", () => {
-  it("identifies CalcTutor and links to service health", () => {
+  it("renders the text solver", () => {
     render(<Home />);
 
     expect(
       screen.getByRole("heading", {
-        name: "Calculus explained one step at a time.",
+        name: "Work through calculus, one step at a time.",
       }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "Check service health" }),
-    ).toHaveAttribute("href", "/api/health");
+      screen.getByRole("textbox", { name: "Calculus problem" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Solve problem" }),
+    ).toBeDisabled();
   });
 });

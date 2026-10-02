@@ -1,0 +1,59 @@
+{
+  "status": "solved",
+  "clarification_question": "",
+  "problem": {
+    "restated_latex": "\\int xe^x\\,dx",
+    "topic_id": "integration-by-parts",
+    "problem_type": "indefinite integral; integration by parts"
+  },
+  "strategy": {
+    "method": "Integration by parts",
+    "why_this_method": "The integrand is a product where differentiating x simplifies it and integrating e to the x leaves the same form.",
+    "alternatives": "Substitution does not simplify the product because neither factor is the derivative of the other."
+  },
+  "steps": [
+    {
+      "title": "Choose the parts",
+      "rule": "Integration by parts",
+      "latex": "u=x,\\quad dv=e^x\\,dx",
+      "explanation": "Choose the algebraic factor as u because its derivative becomes simpler. The exponential factor is easy to integrate.",
+      "common_mistake": "Choosing u = e^x does not reduce the remaining integral."
+    },
+    {
+      "title": "Differentiate and integrate the chosen parts",
+      "rule": "Basic derivative and antiderivative rules",
+      "latex": "du=dx,\\quad v=e^x",
+      "explanation": "Differentiate u and integrate dv. These are the pieces needed in the parts formula.",
+      "common_mistake": ""
+    },
+    {
+      "title": "Apply the integration-by-parts formula",
+      "rule": "Integration by parts",
+      "latex": "\\int xe^x\\,dx=xe^x-\\int e^x\\,dx",
+      "explanation": "Use the formula integral u dv equals uv minus integral v du. The remaining integral is now elementary.",
+      "common_mistake": "The formula has a minus sign before the remaining integral."
+    },
+    {
+      "title": "Evaluate the remaining integral",
+      "rule": "Exponential antiderivative",
+      "latex": "\\int xe^x\\,dx=xe^x-e^x+C",
+      "explanation": "The antiderivative of e to the x is itself. Add the arbitrary constant because this is an indefinite integral.",
+      "common_mistake": "Do not omit the constant of integration."
+    }
+  ],
+  "final_answer": {
+    "latex": "\\boxed{e^x(x-1)+C}",
+    "plain": "The antiderivative is e to the x times x minus 1, plus C.",
+    "domain_notes": "Valid for every real x."
+  },
+  "check": {
+    "method": "differentiated the antiderivative",
+    "result": "passed",
+    "detail": "The product rule gives e^x(x - 1) + e^x = x e^x."
+  },
+  "hints": [
+    "Differentiate the factor that becomes simpler.",
+    "Use integration by parts with u = x.",
+    "With u = x and dv = e^x dx, the first term is x e^x."
+  ]
+}

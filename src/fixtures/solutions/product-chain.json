@@ -1,0 +1,59 @@
+{
+  "status": "solved",
+  "clarification_question": "",
+  "problem": {
+    "restated_latex": "\\frac{d}{dx}\\left[x^2\\sin(3x)\\right]",
+    "topic_id": "transcendental-derivatives",
+    "problem_type": "product and chain rule derivative"
+  },
+  "strategy": {
+    "method": "Product rule, then chain rule",
+    "why_this_method": "The expression is a product of x squared and a composite sine function, so each structure needs its own rule.",
+    "alternatives": "Expanding is impossible because sine of 3x is not a polynomial. The product and chain rules are the direct method."
+  },
+  "steps": [
+    {
+      "title": "Set up the product rule",
+      "rule": "Product rule",
+      "latex": "\\frac{d}{dx}[x^2\\sin(3x)]=(x^2)'\\sin(3x)+x^2(\\sin(3x))'",
+      "explanation": "There are two factors, and both depend on x. Differentiate one factor at a time while leaving the other unchanged.",
+      "common_mistake": "Do not multiply the two derivatives; that is not the product rule."
+    },
+    {
+      "title": "Differentiate the polynomial factor",
+      "rule": "Power rule",
+      "latex": "(x^2)'=2x",
+      "explanation": "The exponent comes down as a coefficient and decreases by one. This supplies the derivative of the first factor.",
+      "common_mistake": ""
+    },
+    {
+      "title": "Differentiate the sine composition",
+      "rule": "Chain rule",
+      "latex": "(\\sin(3x))'=\\cos(3x)\\cdot3",
+      "explanation": "Differentiate the outer sine first, then multiply by the derivative of the inner function 3x. The inner derivative is the extra factor 3.",
+      "common_mistake": "Forgetting the factor 3 is the most common chain-rule error here."
+    },
+    {
+      "title": "Combine the product-rule terms",
+      "rule": "Algebraic simplification",
+      "latex": "\\frac{d}{dx}[x^2\\sin(3x)]=2x\\sin(3x)+3x^2\\cos(3x)",
+      "explanation": "Substitute both derivatives into the product-rule setup. The two unlike terms cannot be combined further.",
+      "common_mistake": ""
+    }
+  ],
+  "final_answer": {
+    "latex": "\\boxed{2x\\sin(3x)+3x^2\\cos(3x)}",
+    "plain": "The derivative is 2x sin(3x) plus 3x squared cos(3x).",
+    "domain_notes": "The derivative exists for every real x."
+  },
+  "check": {
+    "method": "evaluated a symmetric difference quotient numerically",
+    "result": "passed",
+    "detail": "The symbolic derivative agrees with the numerical slope at test values."
+  },
+  "hints": [
+    "Notice both a product and a function inside another function.",
+    "Apply the product rule first, then the chain rule to sin(3x).",
+    "The derivative of sin(3x) is 3 cos(3x)."
+  ]
+}

@@ -17,10 +17,13 @@ describe("parseEnv", () => {
     });
   });
 
-  it("requires an Anthropic key outside mock mode", () => {
-    expect(() => parseEnv({ MOCK_AI: "false" })).toThrow(
-      "ANTHROPIC_API_KEY: is required when MOCK_AI is false",
-    );
+  it("validates the Anthropic key format when one is provided", () => {
+    expect(() =>
+      parseEnv({
+        MOCK_AI: "false",
+        ANTHROPIC_API_KEY: "not-an-anthropic-key",
+      }),
+    ).toThrow("ANTHROPIC_API_KEY");
   });
 
   it("reports invalid numeric limits clearly", () => {

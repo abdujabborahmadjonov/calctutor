@@ -1,0 +1,52 @@
+{
+  "status": "solved",
+  "clarification_question": "",
+  "problem": {
+    "restated_latex": "\\lim_{x \\to 0}\\frac{\\sin x}{x}",
+    "topic_id": "limits",
+    "problem_type": "trigonometric limit"
+  },
+  "strategy": {
+    "method": "Squeeze theorem",
+    "why_this_method": "The standard geometric bounds for sine trap the quotient between two functions that both approach 1.",
+    "alternatives": "The standard sine limit is equivalent. L'Hôpital's rule is later in the course and is not needed."
+  },
+  "steps": [
+    {
+      "title": "Identify the standard trigonometric form",
+      "rule": "Squeeze theorem",
+      "latex": "\\lim_{x \\to 0}\\frac{\\sin x}{x}",
+      "explanation": "The direct substitution is indeterminate, but this quotient has a standard geometric comparison. We will trap it between functions with known limits.",
+      "common_mistake": "Do not treat the expression as zero divided by zero; that form signals more work is needed."
+    },
+    {
+      "title": "Apply the geometric sine bounds",
+      "rule": "Squeeze theorem",
+      "latex": "\\cos x \\leq \\frac{\\sin x}{x} \\leq 1",
+      "explanation": "For angles near zero in radians, the unit-circle inequalities give these bounds. The same conclusion holds from both sides of zero.",
+      "common_mistake": "The standard inequality requires radian measure."
+    },
+    {
+      "title": "Take the limit of all three expressions",
+      "rule": "Squeeze theorem",
+      "latex": "1=\\lim_{x\\to0}\\cos x\\leq\\lim_{x\\to0}\\frac{\\sin x}{x}\\leq1",
+      "explanation": "Both outside functions approach 1. The middle expression must therefore approach that same value.",
+      "common_mistake": ""
+    }
+  ],
+  "final_answer": {
+    "latex": "\\boxed{1}",
+    "plain": "The limit is 1.",
+    "domain_notes": "The quotient is undefined at x = 0, but the two-sided limit exists."
+  },
+  "check": {
+    "method": "compared numerical values from both sides",
+    "result": "passed",
+    "detail": "For small positive and negative x, sin(x)/x approaches 1."
+  },
+  "hints": [
+    "Think about a unit-circle inequality that traps sine near zero.",
+    "Use the squeeze theorem with cosine as the lower bound.",
+    "Near zero, cos(x) is at most sin(x)/x, which is at most 1."
+  ]
+}

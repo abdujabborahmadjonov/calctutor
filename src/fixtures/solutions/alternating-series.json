@@ -1,0 +1,59 @@
+{
+  "status": "solved",
+  "clarification_question": "",
+  "problem": {
+    "restated_latex": "\\sum_{n=1}^{\\infty}\\frac{(-1)^n}{n}",
+    "topic_id": "series-tests",
+    "problem_type": "alternating series; conditional convergence"
+  },
+  "strategy": {
+    "method": "Alternating series test followed by an absolute-convergence test",
+    "why_this_method": "The signs alternate and the magnitude 1/n is positive, decreasing, and approaches zero.",
+    "alternatives": "The ratio and root tests are inconclusive because their limits equal 1."
+  },
+  "steps": [
+    {
+      "title": "Separate the alternating sign from the magnitude",
+      "rule": "Alternating series test",
+      "latex": "b_n=\\frac1n>0",
+      "explanation": "Write the terms as an alternating sign times a positive magnitude. The test asks whether these magnitudes decrease to zero.",
+      "common_mistake": "The divergence test alone cannot prove that a series converges."
+    },
+    {
+      "title": "Check that the magnitudes decrease",
+      "rule": "Alternating series test",
+      "latex": "b_{n+1}=\\frac1{n+1}<\\frac1n=b_n",
+      "explanation": "As n grows, the positive denominator grows. Therefore the term magnitudes decrease.",
+      "common_mistake": ""
+    },
+    {
+      "title": "Check the limiting magnitude",
+      "rule": "Alternating series test",
+      "latex": "\\lim_{n\\to\\infty}\\frac1n=0",
+      "explanation": "The second condition is satisfied because the magnitudes vanish. The alternating series therefore converges.",
+      "common_mistake": ""
+    },
+    {
+      "title": "Test absolute convergence",
+      "rule": "p-series test",
+      "latex": "\\sum_{n=1}^{\\infty}\\left|\\frac{(-1)^n}{n}\\right|=\\sum_{n=1}^{\\infty}\\frac1n",
+      "explanation": "Removing the signs gives the harmonic series. It is a p-series with p = 1, so it diverges.",
+      "common_mistake": "Convergence of the alternating series does not imply absolute convergence."
+    }
+  ],
+  "final_answer": {
+    "latex": "\\boxed{\\text{The series converges conditionally.}}",
+    "plain": "The series is conditionally convergent.",
+    "domain_notes": "It converges by alternation but not absolutely."
+  },
+  "check": {
+    "method": "compared partial sums with the known alternating harmonic series",
+    "result": "passed",
+    "detail": "The partial sums settle while the absolute-value series is harmonic and diverges."
+  },
+  "hints": [
+    "Look separately at the signs and at the magnitude 1/n.",
+    "Check the two alternating-series conditions, then test absolute values.",
+    "The absolute-value series is the harmonic series."
+  ]
+}

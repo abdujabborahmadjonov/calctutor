@@ -1,0 +1,59 @@
+{
+  "status": "solved",
+  "clarification_question": "",
+  "problem": {
+    "restated_latex": "\\int_0^1\\frac{dx}{\\sqrt{1-x^2}}",
+    "topic_id": "improper-integrals",
+    "problem_type": "improper definite integral"
+  },
+  "strategy": {
+    "method": "Improper-integral limit with an inverse-trig antiderivative",
+    "why_this_method": "The integrand becomes unbounded at the upper endpoint, so the definite integral must be defined by a limit.",
+    "alternatives": "A sine substitution also works, but it still requires an endpoint limit."
+  },
+  "steps": [
+    {
+      "title": "Identify the improper endpoint",
+      "rule": "Definition of an improper integral",
+      "latex": "\\sqrt{1-x^2}=0\\text{ at }x=1",
+      "explanation": "The denominator vanishes at the upper endpoint. The integral cannot be evaluated by direct endpoint substitution.",
+      "common_mistake": "An integrable endpoint singularity still requires limit notation."
+    },
+    {
+      "title": "Rewrite the integral as a limit",
+      "rule": "Definition of an improper integral",
+      "latex": "\\int_0^1\\frac{dx}{\\sqrt{1-x^2}}=\\lim_{b\\to1^-}\\int_0^b\\frac{dx}{\\sqrt{1-x^2}}",
+      "explanation": "Stop short of the singular endpoint at b. Then let b approach 1 from inside the interval.",
+      "common_mistake": "The approach must be from the left because the interval lies below 1."
+    },
+    {
+      "title": "Use the inverse-sine antiderivative",
+      "rule": "Inverse trigonometric antiderivative",
+      "latex": "\\lim_{b\\to1^-}[\\arcsin x]_0^b=\\lim_{b\\to1^-}(\\arcsin b-\\arcsin0)",
+      "explanation": "The integrand matches the derivative of inverse sine. Evaluate at the temporary endpoint before taking its limit.",
+      "common_mistake": ""
+    },
+    {
+      "title": "Evaluate the endpoint limit",
+      "rule": "Continuity of inverse sine",
+      "latex": "\\lim_{b\\to1^-}\\arcsin b=\\arcsin1=\\frac{\\pi}{2}",
+      "explanation": "Inverse sine is continuous up to 1. The finite limit shows that this improper integral converges.",
+      "common_mistake": "A definite integral never receives a plus C."
+    }
+  ],
+  "final_answer": {
+    "latex": "\\boxed{\\frac{\\pi}{2}}",
+    "plain": "The improper integral converges to pi over 2.",
+    "domain_notes": "The integrand is unbounded at x = 1, but the improper integral converges."
+  },
+  "check": {
+    "method": "used the substitution x = sin(theta)",
+    "result": "passed",
+    "detail": "The transformed bounds are 0 and pi/2 and the transformed integrand is 1."
+  },
+  "hints": [
+    "Inspect the denominator at both endpoints before integrating.",
+    "Replace the upper endpoint with b and take a left-hand limit.",
+    "The antiderivative before taking the limit is arcsin(b) - arcsin(0)."
+  ]
+}

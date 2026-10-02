@@ -51,7 +51,7 @@ export function StepCard({ step, index }: StepCardProps) {
         <div className="overflow-x-auto rounded-lg bg-muted/40 px-4 py-3">
           <Math latex={step.latex} display />
         </div>
-        <Markdown className="text-foreground/85" children={step.explanation} />
+        <Markdown className="text-foreground/85">{step.explanation}</Markdown>
         {step.common_mistake && (
           <aside className="rounded-lg border border-amber-300/60 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-100">
             <strong>Common mistake:</strong> {step.common_mistake}

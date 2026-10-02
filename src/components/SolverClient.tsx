@@ -43,16 +43,14 @@ export function SolverClient() {
   const [aiMode, setAiMode] = useState<"mock" | "anthropic">();
 
   useEffect(() => {
-    const reopenedProblem = new URLSearchParams(window.location.search).get(
-      "problem",
-    );
-    if (reopenedProblem) setProblem(reopenedProblem.slice(0, 2_000));
-
     void Promise.all([
       getSetting("courseId"),
       getSetting("coveredUpTo"),
       getSetting("learnMode"),
     ]).then(([storedCourse, storedCovered, storedLearnMode]) => {
+      const reopenedProblem = new URLSearchParams(window.location.search).get(
+        "problem",
+      );
       const nextCourseId =
         typeof storedCourse?.value === "string" &&
         courseById.has(storedCourse.value)
@@ -65,6 +63,7 @@ export function SolverClient() {
           ? storedCovered.value
           : getDefaultCoveredUpTo(nextCourseId);
 
+      if (reopenedProblem) setProblem(reopenedProblem.slice(0, 2_000));
       setCourseId(nextCourseId);
       setCoveredUpTo(nextCovered);
       setLearnMode(storedLearnMode?.value === true);
@@ -236,7 +235,11 @@ export function SolverClient() {
           )}
           {isSolving && <SolvingState />}
           {solution && (
-            <SolutionView solution={solution} learnMode={learnMode} />
+            <SolutionView
+              key={`${solution.problem.restated_latex}-${learnMode}`}
+              solution={solution}
+              learnMode={learnMode}
+            />
           )}
           {!solution && !isSolving && !error && (
             <Card className="border-dashed">

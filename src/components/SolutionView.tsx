@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Check, Copy, ShieldCheck } from "lucide-react";
 
 import type { Solution } from "@/lib/ai/schemas";
@@ -22,11 +22,6 @@ export function SolutionView({ solution, learnMode }: SolutionViewProps) {
   const [solutionRevealed, setSolutionRevealed] = useState(!learnMode);
   const [visibleSteps, setVisibleSteps] = useState(1);
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    setSolutionRevealed(!learnMode);
-    setVisibleSteps(1);
-  }, [learnMode, solution]);
 
   if (solution.status === "needs_clarification") {
     return (
@@ -75,11 +70,11 @@ export function SolutionView({ solution, learnMode }: SolutionViewProps) {
         <CardContent className="space-y-4 text-sm">
           <div>
             <strong>Why it fits</strong>
-            <Markdown children={solution.strategy.why_this_method} />
+            <Markdown>{solution.strategy.why_this_method}</Markdown>
           </div>
           <div>
             <strong>Other approaches</strong>
-            <Markdown children={solution.strategy.alternatives} />
+            <Markdown>{solution.strategy.alternatives}</Markdown>
           </div>
         </CardContent>
       </Card>

@@ -18,3 +18,15 @@
 - Defer `scripts/smoke.ts` to Phase 1, where the specification introduces its
   golden-problem fixtures and real Claude API path. Phase 0 has no solve path
   and therefore no measurable cost per solve.
+
+## 2026-10-02 — Phase 1 text solver
+
+- Golden smoke uses `SMOKE_EXPECT_MODE` (`mock` or `anthropic`) and asserts the
+  `X-CalcTutor-AI-Mode` response header matches, so fixture runs cannot be
+  mistaken for live API results.
+- Root layout uses an explicit `ReactNode` children prop instead of generated
+  `LayoutProps`, keeping `tsc --noEmit` reliable before the first production
+  build generates `.next/types`.
+- Real-API smoke was not executed in the cloud agent environment because
+  `ANTHROPIC_API_KEY` was unavailable; mock smoke (8/8) validates fixtures and
+  the solve HTTP path.

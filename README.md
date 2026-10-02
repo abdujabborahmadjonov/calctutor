@@ -1,9 +1,9 @@
 # CalcTutor
 
-CalcTutor is a mobile-first calculus tutor for Alberta students. It will solve
+CalcTutor is a mobile-first calculus tutor for Alberta students. It solves
 Calculus I and II problems with named rules, plain-language explanations,
-hints, and answer checks. Phase 0 establishes the tested Next.js foundation;
-the solver begins in Phase 1.
+hints, and answer checks. Phase 1 ships the text solver (course-aware,
+step-by-step solutions, local history) with `MOCK_AI=true` for local work.
 
 The complete product and build contract is in [`docs/SPEC.md`](docs/SPEC.md).
 
@@ -20,9 +20,9 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Local setup uses
-`MOCK_AI=true`, so no Anthropic key is needed in Phase 0. When real AI calls
-are enabled, set `ANTHROPIC_API_KEY` and change `MOCK_AI=false`.
+Open [http://localhost:3000](http://localhost:3000). `.env.example` sets
+`MOCK_AI=true`, so no Anthropic key is required for UI and fixture smoke tests.
+For real Claude solves, set `ANTHROPIC_API_KEY` and `MOCK_AI=false`.
 
 The health endpoint is available at
 [http://localhost:3000/api/health](http://localhost:3000/api/health) and returns
@@ -36,8 +36,14 @@ npm run lint
 npm run typecheck
 npm test
 npm run build
+npm run smoke
 ```
 
+Start the app (`npm run dev` or `npm run start` with `PORT=43127`), then run
+`SMOKE_EXPECT_MODE=mock npm run smoke` against fixture responses. Use
+`SMOKE_EXPECT_MODE=anthropic` only with `MOCK_AI=false` and a valid API key.
+
 Use `npm run test:watch` during development. See
-[`docs/PHASE-0.md`](docs/PHASE-0.md) for the current phase plan and verification
-report, and [`docs/DECISIONS.md`](docs/DECISIONS.md) for implementation choices.
+[`docs/PHASE-1.md`](docs/PHASE-1.md) for the Phase 1 verification report,
+[`docs/PHASE-0.md`](docs/PHASE-0.md) for scaffold notes, and
+[`docs/DECISIONS.md`](docs/DECISIONS.md) for implementation choices.

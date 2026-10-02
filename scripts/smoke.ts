@@ -12,6 +12,8 @@ type SmokeSolution = {
   check: { method: string; result: string };
 };
 
+export {};
+
 type GoldenCase = {
   name: string;
   problemLatex: string;

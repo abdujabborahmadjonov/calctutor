@@ -31,7 +31,12 @@ export function CourseSelector({
     <div className="grid gap-3 sm:grid-cols-2">
       <label className="grid gap-1.5 text-sm font-medium">
         Course
-        <Select value={course.id} onValueChange={onCourseChange}>
+        <Select
+          value={course.id}
+          onValueChange={(value) => {
+            if (value) onCourseChange(value);
+          }}
+        >
           <SelectTrigger className="h-10 w-full">
             <SelectValue />
           </SelectTrigger>
@@ -46,7 +51,12 @@ export function CourseSelector({
       </label>
       <label className="grid gap-1.5 text-sm font-medium">
         Covered up to
-        <Select value={coveredUpTo} onValueChange={onCoveredUpToChange}>
+        <Select
+          value={coveredUpTo}
+          onValueChange={(value) => {
+            if (value) onCoveredUpToChange(value);
+          }}
+        >
           <SelectTrigger className="h-10 w-full">
             <SelectValue />
           </SelectTrigger>

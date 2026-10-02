@@ -18,10 +18,8 @@ function errorResponse(
   message: string,
   headers?: HeadersInit,
 ) {
-  return Response.json<ErrorBody>(
-    { error: { code, message } },
-    { status, headers },
-  );
+  const body = { error: { code, message } } satisfies ErrorBody;
+  return Response.json(body, { status, headers });
 }
 
 export async function POST(request: Request) {

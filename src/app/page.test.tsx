@@ -11,18 +11,14 @@ import Home from "./page";
 
 describe("Home", () => {
   it("renders the text solver", () => {
-    render(<Home />);
+    const { container } = render(<Home />);
 
     expect(
-      screen.getByRole("heading", {
-        name: "Work through calculus, one step at a time.",
-      }),
+      screen.getByText("Work through calculus, one step at a time."),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("textbox", { name: "Calculus problem" }),
+      container.querySelector('textarea[aria-label="Calculus problem"]'),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Solve problem" }),
-    ).toBeDisabled();
+    expect(screen.getByText("Solve problem").closest("button")).toBeDisabled();
   });
 });

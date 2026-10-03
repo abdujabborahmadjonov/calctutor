@@ -58,33 +58,38 @@ export function useSolver() {
         createdAt: now,
       };
 
+      // Save before showing the solution, so a solution on screen is always
+      // already in history (navigating away right after cannot lose it).
+      if (outcome.solution.status === "solved") {
+        try {
+          await saveHistoryEntry({
+            id: problemId,
+            problem: {
+              id: problemId,
+              source,
+              latex,
+              plain: latex,
+              courseId,
+              coveredUpTo,
+              topicId: outcome.solution.problem.topic_id,
+              createdAt: now,
+            },
+            record,
+          });
+        } catch (historyError) {
+          console.error(
+            "[CalcTutor] Could not save local history",
+            historyError,
+          );
+          setStorageWarning(
+            "The solution worked, but this browser could not save it to history.",
+          );
+        }
+      }
+
       setSolution(outcome.solution);
       setSolvedLatex(latex);
       setAiMode(outcome.source);
-
-      if (outcome.solution.status !== "solved") return;
-
-      try {
-        await saveHistoryEntry({
-          id: problemId,
-          problem: {
-            id: problemId,
-            source,
-            latex,
-            plain: latex,
-            courseId,
-            coveredUpTo,
-            topicId: outcome.solution.problem.topic_id,
-            createdAt: now,
-          },
-          record,
-        });
-      } catch (historyError) {
-        console.error("[CalcTutor] Could not save local history", historyError);
-        setStorageWarning(
-          "The solution worked, but this browser could not save it to history.",
-        );
-      }
     } catch (solveError) {
       console.error("[CalcTutor] Solve failed", solveError);
       setError(

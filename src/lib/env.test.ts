@@ -2,7 +2,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { parseEnv } from "./env";
+import { getAnthropicApiKey, parseEnv } from "./env";
 
 describe("parseEnv", () => {
   it("applies safe local defaults in mock mode", () => {
@@ -17,19 +17,37 @@ describe("parseEnv", () => {
     });
   });
 
-  it("validates the Anthropic key format when one is provided", () => {
+  it("does not require or validate a key at parse time", () => {
     expect(() =>
-      parseEnv({
-        MOCK_AI: "false",
-        ANTHROPIC_API_KEY: "not-an-anthropic-key",
-      }),
-    ).toThrow("ANTHROPIC_API_KEY");
+      parseEnv({ MOCK_AI: "false", ANTHROPIC_API_KEY: "not-a-key" }),
+    ).not.toThrow();
+  });
+
+  it("validates the key lazily, preferring CALCTUTOR_ANTHROPIC_API_KEY", () => {
+    const both = parseEnv({
+      CALCTUTOR_ANTHROPIC_API_KEY: "sk-ant-app",
+      ANTHROPIC_API_KEY: "sk-ant-other",
+    });
+    expect(getAnthropicApiKey(both)).toBe("sk-ant-app");
+    expect(
+      getAnthropicApiKey(parseEnv({ ANTHROPIC_API_KEY: "sk-ant-fallback" })),
+    ).toBe("sk-ant-fallback");
+    expect(() => getAnthropicApiKey(parseEnv({}))).toThrow(
+      "CALCTUTOR_ANTHROPIC_API_KEY",
+    );
+    expect(() =>
+      getAnthropicApiKey(parseEnv({ ANTHROPIC_API_KEY: "not-a-key" })),
+    ).toThrow("sk-ant-");
   });
 
   it("treats a blank API key line as unset", () => {
-    expect(
-      parseEnv({ MOCK_AI: "true", ANTHROPIC_API_KEY: "" }).ANTHROPIC_API_KEY,
-    ).toBeUndefined();
+    const parsed = parseEnv({
+      MOCK_AI: "true",
+      ANTHROPIC_API_KEY: "",
+      CALCTUTOR_ANTHROPIC_API_KEY: "",
+    });
+    expect(parsed.ANTHROPIC_API_KEY).toBeUndefined();
+    expect(parsed.CALCTUTOR_ANTHROPIC_API_KEY).toBeUndefined();
   });
 
   it("reports invalid numeric limits clearly", () => {

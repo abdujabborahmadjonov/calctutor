@@ -1,340 +1,328 @@
-type SmokeSolution = {
-  status: string;
-  clarification_question: string;
-  problem: { topic_id: string };
-  strategy: { method: string; alternatives: string };
-  steps: Array<{
-    rule: string;
-    latex: string;
-    common_mistake: string;
-  }>;
-  final_answer: { latex: string; plain: string };
-  check: { method: string; result: string };
-};
+// Golden-problem smoke test (SPEC section 7). Calls lib/ai directly, prints a
+// table, and exits non-zero on any failure.
+//
+//   npm run smoke                        # uses MOCK_AI and keys from .env*
+//   MOCK_AI=false npm run smoke          # real Claude API
+//   SMOKE_EXPECT_MODE=anthropic npm run smoke   # fail if any call was mocked
+//
+// `npm run smoke` runs tsx with the react-server condition so lib/ai's
+// "server-only" imports resolve outside Next.js.
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 
-export {};
+import nextEnv from "@next/env";
+import { z } from "zod";
 
-type GoldenCase = {
-  name: string;
-  problemLatex: string;
-  courseId: string;
-  coveredUpTo: string;
-  validate: (solution: SmokeSolution) => boolean;
-};
+const root = path.resolve(
+  path.dirname(new URL(import.meta.url).pathname),
+  "..",
+);
+nextEnv.loadEnvConfig(root);
+
+// Imported after the env files load, because lib/env reads process.env once.
+const { solveStream } = await import("@/lib/ai/solve-stream");
+const { transcribe } = await import("@/lib/ai/transcribe");
+const { checkWork } = await import("@/lib/ai/check-work");
+const { readPartialSolution } = await import("@/lib/client/partialSolution");
+const schemas = await import("@/lib/ai/schemas");
+type Solution = z.infer<typeof schemas.SolutionSchema>;
+type Transcription = z.infer<typeof schemas.TranscriptionSchema>;
+type CheckWork = z.infer<typeof schemas.CheckWorkSchema>;
+
+const ProblemSchema = z.discriminatedUnion("kind", [
+  z.object({
+    id: z.string(),
+    kind: z.literal("solve"),
+    name: z.string(),
+    problemLatex: z.string(),
+    courseId: z.string(),
+    coveredUpTo: z.string(),
+  }),
+  z.object({
+    id: z.string(),
+    kind: z.literal("transcribe"),
+    name: z.string(),
+    image: z.string(),
+    mediaType: z.enum(schemas.IMAGE_MEDIA_TYPES),
+  }),
+  z.object({
+    id: z.string(),
+    kind: z.literal("check-work"),
+    name: z.string(),
+    problemLatex: z.string(),
+    studentWork: z.string(),
+    courseId: z.string(),
+    coveredUpTo: z.string(),
+  }),
+]);
+
+const problems = z
+  .array(ProblemSchema)
+  .parse(
+    JSON.parse(
+      await readFile(path.join(root, "src/fixtures/problems.json"), "utf8"),
+    ),
+  );
 
 const includes = (value: string, needle: string) =>
   value.toLowerCase().includes(needle.toLowerCase());
-const allText = (solution: SmokeSolution) =>
-  JSON.stringify(solution).toLowerCase();
+const allText = (value: unknown) => JSON.stringify(value).toLowerCase();
+const compact = (value = "") => value.replaceAll(/\s+|\\,/g, "");
 
-const cases: GoldenCase[] = [
-  {
-    name: "sine limit avoids early L'Hôpital",
-    problemLatex: String.raw`\lim_{x \to 0} \frac{\sin x}{x}`,
-    courseId: "ualberta-math-144",
-    coveredUpTo: "limits",
-    validate: (solution) =>
-      solution.status === "solved" &&
-      (includes(solution.strategy.method, "squeeze") ||
-        includes(solution.strategy.method, "standard")) &&
-      includes(solution.strategy.alternatives, "later in the course") &&
-      !solution.steps.some((step) => includes(step.rule, "hôpital")),
-  },
-  {
-    name: "product and chain rules are separate",
-    problemLatex: String.raw`\frac{d}{dx}\left[x^{2}\sin(3x)\right]`,
-    courseId: "ualberta-math-144",
-    coveredUpTo: "transcendental-derivatives",
-    validate: (solution) =>
-      solution.steps.some((step) => includes(step.rule, "product rule")) &&
-      solution.steps.some((step) => includes(step.rule, "chain rule")) &&
-      solution.steps.some(
-        (step) =>
-          includes(step.common_mistake, "factor 3") ||
-          includes(step.common_mistake, "factor 3"),
-      ),
-  },
-  {
-    name: "integration by parts includes constant and check",
-    problemLatex: String.raw`\int x e^{x}\,dx`,
-    courseId: "ualberta-math-146",
-    coveredUpTo: "parametric-polar",
-    validate: (solution) =>
-      includes(solution.strategy.method, "parts") &&
-      includes(solution.final_answer.latex, "+C") &&
-      solution.check.result === "passed" &&
-      includes(solution.check.method, "different"),
-  },
-  {
-    name: "endpoint singularity is treated as improper",
-    problemLatex: String.raw`\int_{0}^{1} \frac{dx}{\sqrt{1-x^{2}}}`,
-    courseId: "ualberta-math-146",
-    coveredUpTo: "improper-integrals",
-    validate: (solution) =>
-      includes(allText(solution), "improper") &&
-      includes(allText(solution), "limit") &&
-      includes(solution.final_answer.latex, "pi"),
-  },
-  {
-    name: "alternating harmonic series is conditional",
-    problemLatex: String.raw`\sum_{n=1}^{\infty} \frac{(-1)^{n}}{n}`,
-    courseId: "ualberta-math-146",
-    coveredUpTo: "series-tests",
-    validate: (solution) =>
-      includes(allText(solution), "alternating series") &&
-      includes(allText(solution), "p-series") &&
-      includes(allText(solution), "conditionally"),
-  },
-  {
-    name: "ladder rate includes sign and direction",
-    problemLatex:
-      "Ladder: 5 m ladder, base slides away at 1 m/s, how fast is the top falling when the base is 3 m from the wall",
-    courseId: "ualberta-math-144",
-    coveredUpTo: "related-rates",
-    validate: (solution) =>
-      includes(allText(solution), "x^2+y^2") &&
-      (includes(allText(solution), "-\\frac34") ||
-        includes(allText(solution), "three quarters")) &&
-      includes(allText(solution), "downward"),
-  },
-  {
-    name: "missing bound asks for clarification",
-    problemLatex: String.raw`\int x^{2} dx from 0 to (missing bound)`,
-    courseId: "ualberta-math-144",
-    coveredUpTo: "substitution",
-    validate: (solution) =>
-      solution.status === "needs_clarification" &&
-      includes(solution.clarification_question, "upper bound"),
-  },
-  {
-    name: "linear algebra is out of scope",
-    problemLatex: "Eigenvalues of a 2 × 2 matrix",
-    courseId: "ualberta-math-144",
-    coveredUpTo: "substitution",
-    validate: (solution) =>
-      solution.status === "out_of_scope" &&
-      includes(allText(solution), "linear algebra"),
-  },
+const solveChecks: Record<string, (solution: Solution) => boolean> = {
+  "sine-limit": (s) =>
+    s.status === "solved" &&
+    (includes(s.strategy.method, "squeeze") ||
+      includes(s.strategy.method, "standard")) &&
+    includes(s.strategy.alternatives, "later in the course") &&
+    !s.steps.some((step) => includes(step.rule, "hôpital")),
+  "product-chain": (s) =>
+    s.steps.some((step) => includes(step.rule, "product rule")) &&
+    s.steps.some((step) => includes(step.rule, "chain rule")) &&
+    s.steps.some((step) => includes(step.common_mistake, "factor 3")),
+  "integration-by-parts": (s) =>
+    includes(s.strategy.method, "parts") &&
+    includes(compact(s.final_answer.latex), "+C") &&
+    s.check.result === "passed" &&
+    includes(s.check.method, "different"),
+  "improper-integral": (s) =>
+    includes(allText(s), "improper") &&
+    includes(allText(s), "limit") &&
+    includes(s.final_answer.latex, "pi"),
+  "alternating-series": (s) =>
+    includes(allText(s), "alternating series") &&
+    includes(allText(s), "p-series") &&
+    includes(allText(s), "conditionally"),
+  "related-rates": (s) =>
+    includes(allText(s), "x^2+y^2") &&
+    (includes(allText(s), "-\\frac34") ||
+      includes(allText(s), "three quarters")) &&
+    includes(allText(s), "downward"),
+  "missing-bound": (s) =>
+    s.status === "needs_clarification" &&
+    includes(s.clarification_question, "upper bound"),
+  "out-of-scope": (s) =>
+    s.status === "out_of_scope" && includes(allText(s), "linear algebra"),
+};
+
+// The transcription must be the exact integral, read with high confidence,
+// and must not solve anything.
+const transcriptionIsExact = (t: Transcription) => {
+  const first = t.problems[0];
+  const latex = compact(first?.latex);
+  return (
+    t.problems.length === 1 &&
+    /x\^\{?2\}?\\ln/.test(latex) &&
+    latex.includes("\\int") &&
+    first.confidence === "high" &&
+    !latex.includes("=")
+  );
+};
+
+// The wrong line has "+ \int", the fix has "- \int", and the final answer
+// x e^x - e^x (in any arrangement) never appears.
+const checkWorkIsRight = (c: CheckWork) => {
+  const everything = compact(JSON.stringify(c));
+  return (
+    c.verdict === "error_found" &&
+    compact(c.first_error.line_latex).includes("+\\int") &&
+    compact(c.first_error.corrected_line_latex).includes("-\\int") &&
+    !/e\^\{?x\}?\(x-1\)|xe\^\{?x\}?-e\^\{?x\}?\+C/.test(everything)
+  );
+};
+
+type Row = {
+  problem: string;
+  mode: string;
+  status: string;
+  answer: string;
+  check: string;
+  ms: number;
+  tokens: string;
+  pass: boolean;
+  detail?: string;
+};
+
+// $ per million tokens, input and output (SPEC section 5).
+const PRICES: Array<[string, number, number]> = [
+  ["claude-haiku", 1, 5],
+  ["claude-sonnet", 2, 10],
+  ["claude-opus", 4, 20],
 ];
-
-const baseUrl = process.env.SMOKE_BASE_URL ?? "http://127.0.0.1:43127";
-const expectedMode = process.env.SMOKE_EXPECT_MODE ?? "mock";
-const transcribeImage =
-  process.env.SMOKE_TRANSCRIBE_IMAGE ??
-  new URL("./fixtures/handwritten-x2-lnx.jpg", import.meta.url).pathname;
-let passed = 0;
-let total = 0;
-let inputTokens = 0;
-let outputTokens = 0;
-
-type SolveRead = {
-  body: SmokeSolution & { error?: { message?: string } };
-  streamed: boolean;
-  firstStepBeforeDone: boolean;
-  usage: { inputTokens: number; outputTokens: number };
+let costUsd = 0;
+const addCost = (model: string, input: number, output: number) => {
+  const price = PRICES.find(([prefix]) => model.startsWith(prefix));
+  if (price) costUsd += (input * price[1] + output * price[2]) / 1_000_000;
 };
 
-// A step is complete once the text holds the start of the next step or the
-// end of the steps array.
-const hasCompleteStep = (text: string) => {
-  const steps = text.indexOf('"steps"');
-  if (steps === -1) return false;
-  const rest = text.slice(steps);
-  return /\}\s*,\s*\{/.test(rest) || /\}\s*\]/.test(rest);
-};
+const expectedMode = process.env.SMOKE_EXPECT_MODE;
+const rows: Row[] = [];
 
-async function readSolve(response: Response): Promise<SolveRead> {
-  const contentType = response.headers.get("content-type") ?? "";
+for (const problem of problems) {
+  const started = performance.now();
+  const elapsed = () => Math.round(performance.now() - started);
 
-  if (!contentType.includes("ndjson")) {
-    return {
-      body: (await response.json()) as SolveRead["body"],
-      streamed: false,
-      firstStepBeforeDone: false,
-      usage: {
-        inputTokens: Number(
-          response.headers.get("x-calctutor-input-tokens") ?? 0,
-        ),
-        outputTokens: Number(
-          response.headers.get("x-calctutor-output-tokens") ?? 0,
-        ),
-      },
-    };
-  }
-
-  let text = "";
-  let firstStepBeforeDone = false;
-
-  for (const line of (await response.text()).split("\n")) {
-    if (!line.trim()) continue;
-    const event = JSON.parse(line) as {
-      type: string;
-      text?: string;
-      solution?: SmokeSolution;
-      usage?: SolveRead["usage"];
-      error?: { message?: string };
-    };
-
-    if (event.type === "delta") {
-      text += event.text ?? "";
-      firstStepBeforeDone ||= hasCompleteStep(text);
-    } else if (event.type === "reset") {
-      text = "";
-    } else if (event.type === "done" && event.solution) {
-      return {
-        body: event.solution,
-        streamed: true,
-        firstStepBeforeDone,
-        usage: event.usage ?? { inputTokens: 0, outputTokens: 0 },
-      };
-    } else if (event.type === "error") {
-      return {
-        body: { error: event.error } as SolveRead["body"],
-        streamed: true,
-        firstStepBeforeDone,
-        usage: { inputTokens: 0, outputTokens: 0 },
-      };
-    }
-  }
-
-  throw new Error("stream ended without a done event");
-}
-
-const report = (name: string, ok: boolean, detail: string) => {
-  total += 1;
-  if (ok) {
-    passed += 1;
-    console.log(`PASS ${name}`);
-  } else {
-    console.error(`FAIL ${name}: ${detail}`);
-  }
-};
-
-for (const golden of cases) {
   try {
-    const response = await fetch(`${baseUrl}/api/solve`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        problemLatex: golden.problemLatex,
-        courseId: golden.courseId,
-        coveredUpTo: golden.coveredUpTo,
-        mode: "full",
-      }),
-    });
-    const mode = response.headers.get("x-calctutor-ai-mode");
-    const read = await readSolve(response);
-    inputTokens += read.usage.inputTokens;
-    outputTokens += read.usage.outputTokens;
+    if (problem.kind === "solve") {
+      let text = "";
+      let firstStepBeforeDone = false;
+      let done:
+        | {
+            solution: Solution;
+            source: string;
+            model: string;
+            usage: { inputTokens: number; outputTokens: number };
+          }
+        | undefined;
 
-    // Streaming must render the first step before the solve finishes;
-    // solutions with no steps (clarification, out of scope) are exempt.
-    const streamOk =
-      !read.streamed ||
-      read.body.status !== "solved" ||
-      read.firstStepBeforeDone;
-    report(
-      golden.name,
-      response.ok &&
-        mode === expectedMode &&
-        streamOk &&
-        golden.validate(read.body),
-      `HTTP ${response.status}, mode=${mode}, streamed=${read.streamed}, firstStepBeforeDone=${read.firstStepBeforeDone}, body=${JSON.stringify(read.body)}`,
-    );
+      for await (const event of solveStream(
+        {
+          problemLatex: problem.problemLatex,
+          courseId: problem.courseId,
+          coveredUpTo: problem.coveredUpTo,
+          mode: "full",
+        },
+        { mockChunkDelayMs: 0 },
+      )) {
+        if (event.type === "delta") {
+          text += event.text;
+          firstStepBeforeDone ||= readPartialSolution(text).steps.length > 0;
+        } else if (event.type === "reset") {
+          text = "";
+        } else if (event.type === "done") {
+          done = event;
+        }
+      }
+
+      if (!done) throw new Error("the stream ended without a solution");
+      const { solution, usage } = done;
+      addCost(done.model, usage.inputTokens, usage.outputTokens);
+      const streamed = solution.status !== "solved" || firstStepBeforeDone;
+
+      rows.push({
+        problem: problem.id,
+        mode: done.source,
+        status: solution.status,
+        answer: solution.final_answer.plain || solution.clarification_question,
+        check: solution.check.result,
+        ms: elapsed(),
+        tokens: `${usage.inputTokens}/${usage.outputTokens}`,
+        pass: solveChecks[problem.id](solution) && streamed,
+        detail: streamed
+          ? undefined
+          : "no complete step before the solve finished",
+      });
+    } else if (problem.kind === "transcribe") {
+      const image = await readFile(path.join(root, problem.image));
+      const result = await transcribe({
+        mediaType: problem.mediaType,
+        data: image.toString("base64"),
+      });
+      addCost(
+        result.model,
+        result.usage.inputTokens,
+        result.usage.outputTokens,
+      );
+
+      rows.push({
+        problem: problem.id,
+        mode: result.source,
+        status: `${result.transcription.problems.length} problem(s)`,
+        answer: result.transcription.problems[0]?.latex ?? "",
+        check: result.transcription.problems[0]?.confidence ?? "",
+        ms: elapsed(),
+        tokens: `${result.usage.inputTokens}/${result.usage.outputTokens}`,
+        // Mock mode serves a fixed fixture, so only its shape can be checked.
+        pass:
+          result.source === "mock"
+            ? result.transcription.problems.length > 0
+            : transcriptionIsExact(result.transcription),
+      });
+    } else {
+      const result = await checkWork({
+        problemLatex: problem.problemLatex,
+        studentWork: problem.studentWork,
+        courseId: problem.courseId,
+        coveredUpTo: problem.coveredUpTo,
+      });
+      addCost(
+        result.model,
+        result.usage.inputTokens,
+        result.usage.outputTokens,
+      );
+
+      rows.push({
+        problem: problem.id,
+        mode: result.source,
+        status: result.result.verdict,
+        answer: result.result.first_error.corrected_line_latex,
+        check: "",
+        ms: elapsed(),
+        tokens: `${result.usage.inputTokens}/${result.usage.outputTokens}`,
+        pass: checkWorkIsRight(result.result),
+      });
+    }
   } catch (error) {
-    report(golden.name, false, String(error));
+    rows.push({
+      problem: problem.id,
+      mode: "-",
+      status: "error",
+      answer: "",
+      check: "",
+      ms: elapsed(),
+      tokens: "-",
+      pass: false,
+      detail: error instanceof Error ? error.message : String(error),
+    });
+  }
+
+  const row = rows.at(-1);
+  if (row && expectedMode && row.mode !== expectedMode) {
+    row.pass = false;
+    row.detail = `expected mode ${expectedMode}, got ${row.mode}`;
   }
 }
 
-try {
-  const { readFile } = await import("node:fs/promises");
-  const image = await readFile(transcribeImage);
-  const response = await fetch(`${baseUrl}/api/transcribe`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      mediaType: "image/jpeg",
-      data: image.toString("base64"),
-    }),
-  });
-  const mode = response.headers.get("x-calctutor-ai-mode");
-  const body = (await response.json()) as {
-    problems?: Array<{ latex: string; confidence: string }>;
-  };
-  const first = body.problems?.[0];
-  const compact = first?.latex.replaceAll(/\s+/g, "") ?? "";
-  // Mock mode serves a fixed fixture, so only its shape can be checked.
-  const valid =
-    expectedMode === "mock"
-      ? Boolean(first)
-      : /x\^\{?2\}?\\ln/.test(compact) &&
-        compact.includes("\\int") &&
-        first?.confidence === "high" &&
-        !compact.includes("=");
-
-  report(
-    "handwritten photo transcribes exactly without solving",
-    response.ok && mode === expectedMode && valid,
-    `HTTP ${response.status}, mode=${mode}, body=${JSON.stringify(body)}`,
-  );
-} catch (error) {
-  report(
-    "handwritten photo transcribes exactly without solving",
-    false,
-    String(error),
-  );
-}
-
-try {
-  const response = await fetch(`${baseUrl}/api/check-work`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      problemLatex: String.raw`\int x e^{x}\,dx`,
-      studentWork: [
-        String.raw`u = x,\quad dv = e^{x}\,dx`,
-        String.raw`du = dx,\quad v = e^{x}`,
-        String.raw`\int x e^{x}\,dx = x e^{x} + \int e^{x}\,dx`,
-        String.raw`= x e^{x} + e^{x} + C`,
-      ].join("\n"),
-      courseId: "ualberta-math-146",
-      coveredUpTo: "parametric-polar",
-    }),
-  });
-  const mode = response.headers.get("x-calctutor-ai-mode");
-  const body = (await response.json()) as {
-    verdict?: string;
-    first_error?: { line_latex: string; corrected_line_latex: string };
-    next_step_hint?: string;
-  };
-  const compact = (value = "") => value.replaceAll(/\s+|\\,/g, "");
-  const errorLine = compact(body.first_error?.line_latex);
-  const corrected = compact(body.first_error?.corrected_line_latex);
-  const everything = compact(JSON.stringify(body));
-  // The wrong line is the one with "+ \int"; the fix has "- \int"; and the
-  // final answer x e^x - e^x (in any arrangement) never appears.
-  const valid =
-    body.verdict === "error_found" &&
-    errorLine.includes("+\\int") &&
-    corrected.includes("-\\int") &&
-    !/e\^\{?x\}?\(x-1\)|xe\^\{?x\}?-e\^\{?x\}?\+C/.test(everything);
-
-  report(
-    "check my work finds the parts sign error and withholds the answer",
-    response.ok && mode === expectedMode && valid,
-    `HTTP ${response.status}, mode=${mode}, body=${JSON.stringify(body)}`,
-  );
-} catch (error) {
-  report(
-    "check my work finds the parts sign error and withholds the answer",
-    false,
-    String(error),
-  );
-}
-
-const estimatedCostUsd = (inputTokens * 2 + outputTokens * 10) / 1_000_000;
-console.log(
-  `RESULT mode=${expectedMode} passed=${passed}/${total} solve_input_tokens=${inputTokens} solve_output_tokens=${outputTokens} estimated_solve_cost_usd=${estimatedCostUsd.toFixed(4)}`,
+const clip = (value: string, width: number) => {
+  const flat = value.replaceAll(/\s+/g, " ");
+  return flat.length > width ? `${flat.slice(0, width - 1)}…` : flat;
+};
+const header = [
+  "problem",
+  "mode",
+  "status",
+  "final answer",
+  "check",
+  "ms",
+  "tokens in/out",
+  "result",
+];
+const table = rows.map((row) => [
+  row.problem,
+  row.mode,
+  row.status,
+  clip(row.answer, 40),
+  row.check,
+  String(row.ms),
+  row.tokens,
+  row.pass ? "PASS" : "FAIL",
+]);
+const widths = header.map((title, column) =>
+  Math.max(title.length, ...table.map((cells) => cells[column].length)),
 );
+const line = (cells: string[]) =>
+  `| ${cells.map((cell, column) => cell.padEnd(widths[column])).join(" | ")} |`;
 
-if (passed !== total) process.exitCode = 1;
+console.log(line(header));
+console.log(`|${widths.map((width) => "-".repeat(width + 2)).join("|")}|`);
+for (const cells of table) console.log(line(cells));
+
+for (const row of rows.filter((item) => !item.pass && item.detail)) {
+  console.log(`FAIL ${row.problem}: ${row.detail}`);
+}
+
+const passed = rows.filter((row) => row.pass).length;
+console.log(
+  `RESULT passed=${passed}/${rows.length} estimated_cost_usd=${costUsd.toFixed(4)}`,
+);
+if (passed !== rows.length) process.exitCode = 1;

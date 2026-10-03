@@ -2,6 +2,11 @@ import "server-only";
 
 import { env } from "@/lib/env";
 
+export type TokenUsage = { inputTokens: number; outputTokens: number };
+
+const NO_USAGE: TokenUsage = { inputTokens: 0, outputTokens: 0 };
+export const mockUsage = () => ({ ...NO_USAGE });
+
 let day = new Date().toISOString().slice(0, 10);
 let usedTokens = 0;
 

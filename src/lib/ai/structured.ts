@@ -6,7 +6,7 @@ import type { z } from "zod";
 
 import { getAnthropicClient } from "./client";
 import { UpstreamError } from "./errors";
-import { assertTokenBudget, logUsage } from "./usage";
+import { assertTokenBudget, logUsage, type TokenUsage } from "./usage";
 
 type StructuredCall<Schema extends z.ZodType> = {
   route: string;
@@ -24,7 +24,12 @@ type StructuredCall<Schema extends z.ZodType> = {
 // final, and the parsed output is validated with the same Zod schema.
 export async function callStructured<Schema extends z.ZodType>(
   call: StructuredCall<Schema>,
-): Promise<{ data: z.infer<Schema>; model: string; latencyMs: number }> {
+): Promise<{
+  data: z.infer<Schema>;
+  model: string;
+  latencyMs: number;
+  usage: TokenUsage;
+}> {
   const startedAt = performance.now();
   assertTokenBudget();
   const client = getAnthropicClient();
@@ -70,7 +75,15 @@ export async function callStructured<Schema extends z.ZodType>(
     const data = call.schema.parse(response.parsed_output) as z.infer<Schema>;
     const latencyMs = Math.round(performance.now() - startedAt);
     logUsage(call.route, response.model, response.usage, latencyMs);
-    return { data, model: response.model, latencyMs };
+    return {
+      data,
+      model: response.model,
+      latencyMs,
+      usage: {
+        inputTokens: response.usage.input_tokens,
+        outputTokens: response.usage.output_tokens,
+      },
+    };
   }
 
   throw new UpstreamError(

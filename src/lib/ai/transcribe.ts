@@ -13,11 +13,13 @@ import {
   TranscriptionSchema,
 } from "./schemas";
 import { callStructured } from "./structured";
+import { mockUsage, type TokenUsage } from "./usage";
 
 export type TranscribeResult = {
   transcription: Transcription;
   model: string;
   latencyMs: number;
+  usage: TokenUsage;
   source: "mock" | "anthropic";
 };
 
@@ -33,6 +35,7 @@ export async function transcribe(
       transcription: mockTranscription,
       model: "mock-fixture",
       latencyMs: 0,
+      usage: mockUsage(),
       source: "mock",
     };
   }
@@ -62,6 +65,7 @@ export async function transcribe(
     transcription: result.data,
     model: result.model,
     latencyMs: result.latencyMs,
+    usage: result.usage,
     source: "anthropic",
   };
 }

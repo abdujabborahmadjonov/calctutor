@@ -14,15 +14,24 @@ import {
   CheckWorkSchema,
 } from "./schemas";
 import { callStructured } from "./structured";
+import { mockUsage, type TokenUsage } from "./usage";
 
 const mockCheckWork = CheckWorkSchema.parse(partsSignError);
 
-export async function checkWork(
-  request: CheckWorkRequest,
-): Promise<{ result: CheckWork; source: "mock" | "anthropic" }> {
+export async function checkWork(request: CheckWorkRequest): Promise<{
+  result: CheckWork;
+  source: "mock" | "anthropic";
+  model: string;
+  usage: TokenUsage;
+}> {
   if (env.MOCK_AI) {
     console.warn("[CalcTutor] MOCK_AI=true; serving a fixture work check");
-    return { result: mockCheckWork, source: "mock" };
+    return {
+      result: mockCheckWork,
+      source: "mock",
+      model: "mock-fixture",
+      usage: mockUsage(),
+    };
   }
 
   const course = buildCourseBlock(request.courseId, request.coveredUpTo);
@@ -41,5 +50,10 @@ export async function checkWork(
     subject: "work check",
   });
 
-  return { result: result.data, source: "anthropic" };
+  return {
+    result: result.data,
+    source: "anthropic",
+    model: result.model,
+    usage: result.usage,
+  };
 }

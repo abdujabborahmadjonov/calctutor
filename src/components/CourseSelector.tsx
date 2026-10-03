@@ -1,6 +1,6 @@
 "use client";
 
-import { courses, topicById } from "@/lib/curriculum/alberta";
+import { courseById, courses, topicById } from "@/lib/curriculum/alberta";
 
 import {
   Select,
@@ -37,8 +37,15 @@ export function CourseSelector({
             if (value) onCourseChange(value);
           }}
         >
-          <SelectTrigger className="h-10 w-full">
-            <SelectValue />
+          <SelectTrigger className="h-10 w-full" aria-label="Course">
+            <SelectValue>
+              {(value: string) => {
+                const selected = courseById.get(value);
+                return selected
+                  ? `${selected.code} · ${selected.institution}`
+                  : value;
+              }}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {courses.map((item) => (
@@ -57,8 +64,10 @@ export function CourseSelector({
             if (value) onCoveredUpToChange(value);
           }}
         >
-          <SelectTrigger className="h-10 w-full">
-            <SelectValue />
+          <SelectTrigger className="h-10 w-full" aria-label="Covered up to">
+            <SelectValue>
+              {(value: string) => topicById.get(value)?.name ?? value}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {course.topicOrder.map((topicId) => (

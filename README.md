@@ -5,7 +5,9 @@ Calculus I and II problems with named rules, plain-language explanations,
 hints, and answer checks. Phase 1 ships the text solver (course-aware,
 step-by-step solutions, local history). Phase 2 adds photo input with
 transcription and confirmation, streamed solutions that render step by step,
-and "Explain this step more". `MOCK_AI=true` serves fixtures for local work.
+and "Explain this step more". Phase 3 adds SymPy verification of final
+answers, graded practice problems, check my work, Markdown and PDF export, and
+a topic browser. `MOCK_AI=true` serves fixtures for local work.
 
 The complete product and build contract is in [`docs/SPEC.md`](docs/SPEC.md).
 
@@ -21,6 +23,11 @@ npm install
 cp .env.example .env.local
 npm run dev
 ```
+
+`npm run dev` and `npm run build` first run `npm run vendor:pyodide`, which
+copies the Pyodide runtime into `public/pyodide/` and downloads the pinned
+SymPy and mpmath wheels from PyPI (checked by sha256). The first run needs
+network access to PyPI; later runs reuse the files.
 
 Open [http://localhost:3000](http://localhost:3000). `.env.example` sets
 `MOCK_AI=true`, so no Anthropic key is required for UI and fixture smoke tests.
@@ -50,7 +57,8 @@ The smoke run also posts `scripts/fixtures/handwritten-x2-lnx.jpg` to
 `/api/transcribe`; set `SMOKE_TRANSCRIBE_IMAGE` to use your own photo.
 
 Use `npm run test:watch` during development. See
-[`docs/PHASE-2.md`](docs/PHASE-2.md) and [`docs/PHASE-1.md`](docs/PHASE-1.md)
+[`docs/PHASE-3.md`](docs/PHASE-3.md), [`docs/PHASE-2.md`](docs/PHASE-2.md) and
+[`docs/PHASE-1.md`](docs/PHASE-1.md)
 for the phase verification reports,
 [`docs/PHASE-0.md`](docs/PHASE-0.md) for scaffold notes, and
 [`docs/DECISIONS.md`](docs/DECISIONS.md) for implementation choices.

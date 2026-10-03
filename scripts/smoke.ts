@@ -285,6 +285,53 @@ try {
   );
 }
 
+try {
+  const response = await fetch(`${baseUrl}/api/check-work`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      problemLatex: String.raw`\int x e^{x}\,dx`,
+      studentWork: [
+        String.raw`u = x,\quad dv = e^{x}\,dx`,
+        String.raw`du = dx,\quad v = e^{x}`,
+        String.raw`\int x e^{x}\,dx = x e^{x} + \int e^{x}\,dx`,
+        String.raw`= x e^{x} + e^{x} + C`,
+      ].join("\n"),
+      courseId: "ualberta-math-146",
+      coveredUpTo: "parametric-polar",
+    }),
+  });
+  const mode = response.headers.get("x-calctutor-ai-mode");
+  const body = (await response.json()) as {
+    verdict?: string;
+    first_error?: { line_latex: string; corrected_line_latex: string };
+    next_step_hint?: string;
+  };
+  const compact = (value = "") => value.replaceAll(/\s+|\\,/g, "");
+  const errorLine = compact(body.first_error?.line_latex);
+  const corrected = compact(body.first_error?.corrected_line_latex);
+  const everything = compact(JSON.stringify(body));
+  // The wrong line is the one with "+ \int"; the fix has "- \int"; and the
+  // final answer x e^x - e^x (in any arrangement) never appears.
+  const valid =
+    body.verdict === "error_found" &&
+    errorLine.includes("+\\int") &&
+    corrected.includes("-\\int") &&
+    !/e\^\{?x\}?\(x-1\)|xe\^\{?x\}?-e\^\{?x\}?\+C/.test(everything);
+
+  report(
+    "check my work finds the parts sign error and withholds the answer",
+    response.ok && mode === expectedMode && valid,
+    `HTTP ${response.status}, mode=${mode}, body=${JSON.stringify(body)}`,
+  );
+} catch (error) {
+  report(
+    "check my work finds the parts sign error and withholds the answer",
+    false,
+    String(error),
+  );
+}
+
 const estimatedCostUsd = (inputTokens * 2 + outputTokens * 10) / 1_000_000;
 console.log(
   `RESULT mode=${expectedMode} passed=${passed}/${total} solve_input_tokens=${inputTokens} solve_output_tokens=${outputTokens} estimated_solve_cost_usd=${estimatedCostUsd.toFixed(4)}`,

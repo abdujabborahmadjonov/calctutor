@@ -76,3 +76,58 @@
   key now counts as unset.
 - On phone widths, starting a solve scrolls the solution into view, since it
   sits below both inputs.
+
+## 2026-10-03 — Phase 3 learning features
+
+- **Pyodide is self-hosted, not loaded from a CDN.** `scripts/vendor-pyodide.ts`
+  (run by `predev` and `prebuild`) copies the runtime from the pinned `pyodide`
+  npm package (314.0.7) into `public/pyodide/` and downloads the SymPy 1.14.0
+  and mpmath 1.3.0 wheels from PyPI, checking each against a pinned sha256.
+  Reasons: no third-party script at runtime, and it works in networks that
+  block jsdelivr (this build environment does). The folder is gitignored.
+  mpmath is pinned to 1.3.0 because SymPy 1.14 requires `mpmath<1.4`.
+- **The CAS worker is started from a Blob, not bundled.** Pyodide only runs in
+  module workers, and Turbopack emitted the bundled worker as a classic
+  script. The worker source is a small JavaScript string in
+  `lib/verify/sympy.worker.ts`; it receives the asset paths and the Python
+  program in each message.
+- **LaTeX is converted in TypeScript, not by SymPy's LaTeX parser.** SymPy's
+  `lark` backend misread ordinary input (for example
+  `2x\sin(3x)+3x^2\cos(3x)` became `2x·sin(3x²+3x)·cos(3x)`), and the `antlr`
+  backend needs an extra runtime. `lib/verify/latexToSympy.ts` handles the
+  notation solutions use and refuses anything else; Python only runs
+  `parse_expr` and the math.
+- **Verification is one-sided.** A check can confirm an answer ("Verified with
+  SymPy") but never declare one wrong, because a failed check might come from
+  the conversion rather than the answer; everything else shows "Could not
+  verify". Equalities are confirmed symbolically (`simplify`) or at four or
+  more numeric sample points; definite integrals are compared with
+  `mpmath.quad`, which handles endpoint singularities such as
+  $\int_0^1 dx/\sqrt{1-x^2}$. Series verdicts, word problems and prose
+  answers are not attempted.
+- **Pyodide loads only when needed.** The badge mounts with the final answer
+  and imports the CAS client lazily; solutions without a checkable form never
+  load it. The first check downloads about 19 MB (cached afterwards) and took
+  about 6 s in headless Chromium; later checks take milliseconds.
+- **Graded compare uses the same worker.** Practice problems and Learn mode
+  compare the student's answer with the expected one. A failed comparison says
+  SymPy "could not match" the answers rather than "wrong", and an answer that
+  cannot be read, or a check that could not run, asks the student to compare by
+  eye. Learn mode hides the "Show the answer" link, since "Reveal solution"
+  already exists there.
+- **`/api/similar` uses the light model (Haiku 4.5)** per the spec, with no
+  effort setting. It takes an optional problem: empty for topic practice. An
+  unknown `topic_id` from a solve falls back to the covered-up-to topic.
+- **`/api/check-work` uses the solve model at high effort**, a dedicated system
+  prompt, and the solve rate limit under its own key. The confirmation screen
+  offers "Check my work" whenever a photo includes the student's own working.
+- **One helper for structured calls.** `lib/ai/structured.ts` holds the
+  parse-call rules (max_tokens retry with double the limit, refusal handling,
+  Zod validation, usage logging); transcribe, similar and check-work use it.
+- **PDF export uses the browser's print dialog** ("Print or save as PDF") with
+  print styles that hide everything but the solution. This needs no new
+  dependency. Markdown export is generated in the browser.
+- **Topic browser** pages are static (`generateStaticParams`), with explainers
+  kept as editable data in `lib/curriculum/explainers.ts` (a test checks every
+  topic has one). "Report a wrong topic" opens a prefilled GitHub issue on
+  this repository, since the app has no contact address yet.

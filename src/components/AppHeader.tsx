@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { History, Moon, Sun } from "lucide-react";
+import { BookMarked, History, Moon, Sun } from "lucide-react";
 
 import { getSetting, setSetting } from "@/lib/storage/history";
 
@@ -31,7 +31,7 @@ export function AppHeader() {
   };
 
   return (
-    <header className="border-b bg-background/90 backdrop-blur">
+    <header className="border-b bg-background/90 backdrop-blur print:hidden">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         <Link href="/" className="font-semibold tracking-tight">
           CalcTutor
@@ -40,6 +40,13 @@ export function AppHeader() {
           className="flex items-center gap-1"
           aria-label="Primary navigation"
         >
+          <Link
+            href="/topics"
+            className={buttonVariants({ variant: "ghost", size: "sm" })}
+          >
+            <BookMarked />
+            Topics
+          </Link>
           <Link
             href="/history"
             className={buttonVariants({ variant: "ghost", size: "sm" })}

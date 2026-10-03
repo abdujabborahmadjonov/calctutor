@@ -141,8 +141,9 @@ export function SolverClient() {
           Work through calculus, one step at a time.
         </h1>
         <p className="max-w-3xl text-muted-foreground">
-          Type a problem in plain English or LaTeX, or photograph it. CalcTutor
-          will choose an allowed method for your course and explain every move.
+          Type a problem in plain English or LaTeX, photograph it, or write it
+          with Apple Pencil. CalcTutor will choose an allowed method for your
+          course and explain every move.
         </p>
       </div>
 

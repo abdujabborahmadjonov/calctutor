@@ -25,8 +25,9 @@ export function CheckWorkInput({
         <CardTitle>Check my work</CardTitle>
         <p className="text-sm text-muted-foreground">
           Enter the problem above, then paste your attempt one line per step.
-          CalcTutor finds the first mistake and stops there. A photo with your
-          working on it also offers this check.
+          CalcTutor finds the first mistake and stops there. To check
+          handwritten work, use the photo or Apple Pencil card instead and write
+          your working under the problem.
         </p>
       </CardHeader>
       <CardContent className="space-y-3">

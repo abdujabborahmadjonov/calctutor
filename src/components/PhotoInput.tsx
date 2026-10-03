@@ -2,13 +2,15 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, PenLine } from "lucide-react";
 
 import { type Transcription, TranscriptionSchema } from "@/lib/ai/schemas";
 import { ImagePrepError, prepareImage } from "@/lib/image/prepare";
 
+import { HandwritingPad } from "./HandwritingPad";
 import { ImageCapture } from "./ImageCapture";
 import { TranscriptionConfirm } from "./TranscriptionConfirm";
+import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { formatElapsed, useElapsedSeconds } from "./useElapsedSeconds";
 
@@ -46,6 +48,7 @@ export function PhotoInput({
   disabled,
 }: PhotoInputProps) {
   const [state, setState] = useState<PhotoState>({ stage: "idle" });
+  const [writing, setWriting] = useState(false);
   const [error, setError] = useState("");
   const previewUrl = state.stage === "idle" ? undefined : state.previewUrl;
 
@@ -99,10 +102,10 @@ export function PhotoInput({
   return (
     <Card className="shadow-sm">
       <CardHeader>
-        <CardTitle>Or use a photo</CardTitle>
+        <CardTitle>Or use a photo or your pen</CardTitle>
         <p className="text-sm text-muted-foreground">
-          A clear photo of one problem works best. You confirm what was read
-          before anything is solved.
+          Photograph the problem, or write it by hand with Apple Pencil. You
+          confirm what was read before anything is solved.
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -122,6 +125,30 @@ export function PhotoInput({
             height={2000}
             unoptimized
             className="max-h-56 w-full rounded-lg border object-contain"
+          />
+        )}
+
+        {state.stage === "idle" && (
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            className="h-12 w-full text-base"
+            disabled={disabled}
+            onClick={() => setWriting(true)}
+          >
+            <PenLine className="size-5" />
+            Write with Apple Pencil
+          </Button>
+        )}
+
+        {writing && (
+          <HandwritingPad
+            onCancel={() => setWriting(false)}
+            onDone={(image) => {
+              setWriting(false);
+              void readPhoto(image);
+            }}
           />
         )}
 

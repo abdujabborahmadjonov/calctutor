@@ -68,7 +68,7 @@ export function AnswerCheck({
           value={answer}
           maxLength={500}
           className="font-mono"
-          placeholder="LaTeX or plain text, like \frac{x^2}{2} + C"
+          placeholder="e.g. x^2/2 + C"
           onChange={(event) => {
             setAnswer(event.target.value);
             setGrade(undefined);

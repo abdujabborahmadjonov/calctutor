@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 
@@ -113,10 +114,13 @@ export function PhotoInput({
         )}
 
         {previewUrl && (
-          // eslint-disable-next-line @next/next/no-img-element -- local blob preview
-          <img
+          // A local blob URL, so Next's image optimizer is bypassed.
+          <Image
             src={previewUrl}
             alt="Your problem photo"
+            width={2000}
+            height={2000}
+            unoptimized
             className="max-h-56 w-full rounded-lg border object-contain"
           />
         )}

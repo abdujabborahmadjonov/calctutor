@@ -88,6 +88,55 @@ export const ExplainStepRequestSchema = z.object({
   stepIndex: z.number().int().nonnegative(),
 });
 
+export const SimilarSchema = z.object({
+  problems: z.array(
+    z.object({
+      latex: z.string(),
+      plain: z.string(),
+      difficulty: z.enum(["easier", "same", "harder"]),
+      answer_latex: z.string(),
+    }),
+  ),
+});
+
+// problemLatex is "" when practice comes from the topic browser instead of a
+// solved problem.
+export const SimilarRequestSchema = z.object({
+  problemLatex: z
+    .string()
+    .trim()
+    .max(2_000, "Problem must be 2,000 characters or fewer"),
+  topicId: z.string().min(1),
+  courseId: z.string(),
+  coveredUpTo: z.string(),
+});
+
+export const CheckWorkSchema = z.object({
+  verdict: z.enum(["correct", "error_found", "incomplete", "unreadable"]),
+  first_error: z.object({
+    line_latex: z.string(),
+    what_went_wrong: z.string(),
+    why: z.string(),
+    corrected_line_latex: z.string(),
+  }),
+  next_step_hint: z.string(),
+});
+
+export const CheckWorkRequestSchema = z.object({
+  problemLatex: z
+    .string()
+    .trim()
+    .min(1, "Enter the problem you worked on")
+    .max(2_000, "Problem must be 2,000 characters or fewer"),
+  studentWork: z
+    .string()
+    .trim()
+    .min(1, "Enter your work")
+    .max(4_000, "Your work must be 4,000 characters or fewer"),
+  courseId: z.string(),
+  coveredUpTo: z.string(),
+});
+
 export const ProblemSchema = z.object({
   id: z.string(),
   source: z.enum(["text", "image"]),
@@ -121,6 +170,11 @@ export type TranscribedProblem = Transcription["problems"][number];
 export type TranscribeRequest = z.infer<typeof TranscribeRequestSchema>;
 export type ImageMediaType = TranscribeRequest["mediaType"];
 export type ExplainStepRequest = z.infer<typeof ExplainStepRequestSchema>;
+export type Similar = z.infer<typeof SimilarSchema>;
+export type SimilarProblem = Similar["problems"][number];
+export type SimilarRequest = z.infer<typeof SimilarRequestSchema>;
+export type CheckWork = z.infer<typeof CheckWorkSchema>;
+export type CheckWorkRequest = z.infer<typeof CheckWorkRequestSchema>;
 export type Problem = z.infer<typeof ProblemSchema>;
 export type SolutionRecord = z.infer<typeof SolutionRecordSchema>;
 

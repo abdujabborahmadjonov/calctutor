@@ -1,0 +1,22 @@
+{
+  "problems": [
+    {
+      "latex": "\\int x\\cos x\\,dx",
+      "plain": "Integrate x cos x with respect to x.",
+      "difficulty": "easier",
+      "answer_latex": "x\\sin x+\\cos x+C"
+    },
+    {
+      "latex": "\\int x e^{2x}\\,dx",
+      "plain": "Integrate x e^(2x) with respect to x.",
+      "difficulty": "same",
+      "answer_latex": "\\frac{x}{2}e^{2x}-\\frac{1}{4}e^{2x}+C"
+    },
+    {
+      "latex": "\\int x^{2} e^{x}\\,dx",
+      "plain": "Integrate x^2 e^x with respect to x.",
+      "difficulty": "harder",
+      "answer_latex": "e^{x}(x^{2}-2x+2)+C"
+    }
+  ]
+}

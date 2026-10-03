@@ -79,3 +79,19 @@ export function describeAiFailure(error: unknown, route: string): ApiFailure {
   console.error(`[CalcTutor] Unexpected ${route} failure`, error);
   return failure(502, "unexpected_error", "Something went wrong on our side.");
 }
+
+// Returns a 400 response when the course or covered-up-to topic is unknown.
+export function invalidCourseResponse(
+  validate: () => unknown,
+): Response | undefined {
+  try {
+    validate();
+    return undefined;
+  } catch (error) {
+    return errorResponse(
+      400,
+      "invalid_course",
+      error instanceof Error ? error.message : "Choose a valid course topic.",
+    );
+  }
+}

@@ -10,6 +10,7 @@ import {
   describeAiFailure,
   errorResponse,
   failureResponse,
+  invalidCourseResponse,
   rateLimitedResponse,
   readJson,
 } from "@/lib/api/errors";
@@ -108,15 +109,10 @@ export async function POST(request: Request) {
     );
   }
 
-  try {
-    getAllowedCurriculum(parsed.data.courseId, parsed.data.coveredUpTo);
-  } catch (error) {
-    return errorResponse(
-      400,
-      "invalid_course",
-      error instanceof Error ? error.message : "Choose a valid course topic.",
-    );
-  }
+  const courseError = invalidCourseResponse(() =>
+    getAllowedCurriculum(parsed.data.courseId, parsed.data.coveredUpTo),
+  );
+  if (courseError) return courseError;
 
   const limit = consumeRateLimit(
     `solve:${clientIp(request)}`,

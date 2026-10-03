@@ -131,3 +131,33 @@
   kept as editable data in `lib/curriculum/explainers.ts` (a test checks every
   topic has one). "Report a wrong topic" opens a prefilled GitHub issue on
   this repository, since the app has no contact address yet.
+
+## 2026-10-03 — Autonomous build run (docs/RUN.md)
+
+- The run started from the Phase 0–3 branch instead of an empty repository,
+  so it closed the gaps RUN.md names rather than rebuilding phases.
+- No API key was available in the run's session, so everything ran with
+  `MOCK_AI=true` (RUN.md's fallback). The real-API smoke run is open.
+- The app's key is read from `CALCTUTOR_ANTHROPIC_API_KEY`, falling back to
+  `ANTHROPIC_API_KEY`, and validated on the first AI call
+  (`getAnthropicApiKey`), not at import.
+- Golden-problem inputs live in `src/fixtures/problems.json`, next to the
+  existing solution fixtures, rather than a top-level `fixtures/` folder, so
+  every fixture stays under the `@/` alias.
+- The smoke script calls `lib/ai` directly with tsx under the
+  `react-server` condition; `server-only` is installed as a package (it is the
+  package Next.js expects for `import "server-only"`) so it resolves outside
+  Next.
+- The mock-mode banner asks `/api/mode` at runtime: pages are prerendered, so a
+  server-rendered banner would show the build-time setting. `/api/health`
+  stays independent of AI configuration.
+- `@playwright/test` is pinned to 1.56.1 to match the pre-installed Chromium;
+  CI installs its own browser. `tsx` runs the scripts.
+- Every finished AI attempt counts against `DAILY_TOKEN_BUDGET`, including one
+  cut off at `max_tokens` or refused, and a stream the student abandons is
+  aborted upstream and its reported usage recorded.
+- The SymPy equivalence check samples negative as well as positive points, so
+  answers that agree only for x > 0 (such as `2\ln x` and `\ln(x^2)`) are not
+  graded as equal.
+- Card titles render as `h2` so solutions are navigable by heading, and every
+  page has a "Skip to content" link.

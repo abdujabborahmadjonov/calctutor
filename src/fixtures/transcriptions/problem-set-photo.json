@@ -1,0 +1,23 @@
+{
+  "problems": [
+    {
+      "label": "3(a)",
+      "latex": "\\int x e^{x}\\,dx",
+      "plain": "Evaluate the integral of x e^x with respect to x.",
+      "confidence": "high",
+      "ambiguities": [],
+      "student_work_latex": ""
+    },
+    {
+      "label": "3(b)",
+      "latex": "\\lim_{x \\to 0} \\frac{\\sin x}{x}",
+      "plain": "Find the limit of sin x over x as x approaches 0.",
+      "confidence": "medium",
+      "ambiguities": [
+        "The limit point could be 0 or a lowercase o; 0 was used."
+      ],
+      "student_work_latex": "\\frac{\\sin x}{x} \\approx 1"
+    }
+  ],
+  "image_quality_note": ""
+}

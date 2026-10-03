@@ -15,7 +15,7 @@ import {
   type SolveRequest,
   validateSolution,
 } from "./schemas";
-import { assertTokenBudget, recordTokenUsage } from "./usage";
+import { assertTokenBudget, logUsage } from "./usage";
 
 export type SolveResult = {
   solution: Solution;
@@ -24,6 +24,32 @@ export type SolveResult = {
   latencyMs: number;
   source: "mock" | "anthropic";
 };
+
+export function buildSolveParams(request: SolveRequest, maxTokens: number) {
+  const course = buildCourseBlock(request.courseId, request.coveredUpTo);
+
+  return {
+    model: env.ANTHROPIC_MODEL_SOLVE,
+    max_tokens: maxTokens,
+    system: [
+      {
+        type: "text" as const,
+        text: TUTOR_SYSTEM_PROMPT,
+        cache_control: { type: "ephemeral" as const },
+      },
+    ],
+    messages: [
+      {
+        role: "user" as const,
+        content: `${course}\n<mode>${request.mode}</mode>\n<problem>\n${request.problemLatex}\n</problem>`,
+      },
+    ],
+    output_config: {
+      effort: "high" as const,
+      format: zodOutputFormat(SolutionSchema),
+    },
+  };
+}
 
 export async function solve(request: SolveRequest): Promise<SolveResult> {
   const startedAt = performance.now();
@@ -41,32 +67,13 @@ export async function solve(request: SolveRequest): Promise<SolveResult> {
 
   assertTokenBudget();
   const client = getAnthropicClient();
-  const course = buildCourseBlock(request.courseId, request.coveredUpTo);
   let maxTokens = 8_000;
 
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
-      const response = await client.messages.parse({
-        model: env.ANTHROPIC_MODEL_SOLVE,
-        max_tokens: maxTokens,
-        system: [
-          {
-            type: "text",
-            text: TUTOR_SYSTEM_PROMPT,
-            cache_control: { type: "ephemeral" },
-          },
-        ],
-        messages: [
-          {
-            role: "user",
-            content: `${course}\n<mode>${request.mode}</mode>\n<problem>\n${request.problemLatex}\n</problem>`,
-          },
-        ],
-        output_config: {
-          effort: "high",
-          format: zodOutputFormat(SolutionSchema),
-        },
-      });
+      const response = await client.messages.parse(
+        buildSolveParams(request, maxTokens),
+      );
 
       if (response.stop_reason === "max_tokens") {
         if (attempt === 0) {
@@ -97,24 +104,17 @@ export async function solve(request: SolveRequest): Promise<SolveResult> {
       }
 
       const solution = validateSolution(response.parsed_output);
-      const inputTokens = response.usage.input_tokens;
-      const outputTokens = response.usage.output_tokens;
       const latencyMs = Math.round(performance.now() - startedAt);
 
-      recordTokenUsage(inputTokens, outputTokens);
-      console.info("[CalcTutor] AI usage", {
-        route: "solve",
-        model: response.model,
-        inputTokens,
-        outputTokens,
-        cacheReadTokens: response.usage.cache_read_input_tokens ?? 0,
-        latencyMs,
-      });
+      logUsage("solve", response.model, response.usage, latencyMs);
 
       return {
         solution,
         model: response.model,
-        usage: { inputTokens, outputTokens },
+        usage: {
+          inputTokens: response.usage.input_tokens,
+          outputTokens: response.usage.output_tokens,
+        },
         latencyMs,
         source: "anthropic",
       };

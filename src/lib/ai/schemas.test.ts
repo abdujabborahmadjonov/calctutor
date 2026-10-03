@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import fixture from "@/fixtures/solutions/integration-by-parts.json";
+import transcription from "@/fixtures/transcriptions/problem-set-photo.json";
 
 import {
+  ExplainStepRequestSchema,
   SolutionSchema,
   SolveRequestSchema,
+  TranscribeRequestSchema,
+  TranscriptionSchema,
   validateSolution,
 } from "./schemas";
 
@@ -41,5 +45,53 @@ describe("AI schemas", () => {
     });
 
     expect(result.success).toBe(false);
+  });
+
+  it("accepts the transcription fixture and rejects unknown confidence", () => {
+    expect(TranscriptionSchema.parse(transcription).problems).toHaveLength(2);
+    expect(() =>
+      TranscriptionSchema.parse({
+        ...transcription,
+        problems: [{ ...transcription.problems[0], confidence: "certain" }],
+      }),
+    ).toThrow();
+  });
+
+  it("bounds transcribe requests to supported types and base64 data", () => {
+    expect(
+      TranscribeRequestSchema.safeParse({
+        mediaType: "image/heic",
+        data: "AAAA",
+      }).success,
+    ).toBe(false);
+    expect(
+      TranscribeRequestSchema.safeParse({
+        mediaType: "image/jpeg",
+        data: "not base64!",
+      }).success,
+    ).toBe(false);
+    expect(
+      TranscribeRequestSchema.safeParse({
+        mediaType: "image/jpeg",
+        data: "/9j/4AAQ",
+      }).success,
+    ).toBe(true);
+  });
+
+  it("requires a whole solution and a step index for explain-step", () => {
+    expect(
+      ExplainStepRequestSchema.safeParse({
+        problemLatex: "x",
+        solution: fixture,
+        stepIndex: 0,
+      }).success,
+    ).toBe(true);
+    expect(
+      ExplainStepRequestSchema.safeParse({
+        problemLatex: "x",
+        solution: fixture,
+        stepIndex: -1,
+      }).success,
+    ).toBe(false);
   });
 });

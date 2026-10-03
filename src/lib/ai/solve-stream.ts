@@ -8,7 +8,7 @@ import { getMockSolution } from "./mock";
 import { type SolveRequest, validateSolution } from "./schemas";
 import { buildSolveParams } from "./solve";
 import type { SolveStreamEvent } from "./stream-events";
-import { assertTokenBudget, logUsage } from "./usage";
+import { abandonStream, assertTokenBudget, logUsage } from "./usage";
 
 const MOCK_CHUNK_SIZE = 48;
 
@@ -61,17 +61,30 @@ async function* anthropicSolveStream(
       const stream = client.messages.stream(
         buildSolveParams(request, maxTokens),
       );
+      let message;
 
-      for await (const event of stream) {
-        if (
-          event.type === "content_block_delta" &&
-          event.delta.type === "text_delta"
-        ) {
-          yield { type: "delta", text: event.delta.text };
+      try {
+        for await (const event of stream) {
+          if (
+            event.type === "content_block_delta" &&
+            event.delta.type === "text_delta"
+          ) {
+            yield { type: "delta", text: event.delta.text };
+          }
         }
+        message = await stream.finalMessage();
+      } finally {
+        if (!message) abandonStream(stream);
       }
 
-      const message = await stream.finalMessage();
+      // Every finished attempt counts against the budget, including one cut
+      // off at max_tokens or refused.
+      logUsage(
+        "solve-stream",
+        message.model,
+        message.usage,
+        Math.round(performance.now() - startedAt),
+      );
 
       if (message.stop_reason === "max_tokens") {
         if (attempt === 0) {
@@ -103,7 +116,6 @@ async function* anthropicSolveStream(
 
       const solution = validateSolution(message.parsed_output);
       const latencyMs = Math.round(performance.now() - startedAt);
-      logUsage("solve-stream", message.model, message.usage, latencyMs);
 
       yield {
         type: "done",

@@ -53,6 +53,14 @@ export async function callStructured<Schema extends z.ZodType>(
       },
     });
 
+    // Every finished attempt counts, including a truncated or refused one.
+    logUsage(
+      call.route,
+      response.model,
+      response.usage,
+      Math.round(performance.now() - startedAt),
+    );
+
     if (response.stop_reason === "max_tokens" && attempt === 0) {
       maxTokens *= 2;
       continue;
@@ -74,7 +82,6 @@ export async function callStructured<Schema extends z.ZodType>(
 
     const data = call.schema.parse(response.parsed_output) as z.infer<Schema>;
     const latencyMs = Math.round(performance.now() - startedAt);
-    logUsage(call.route, response.model, response.usage, latencyMs);
     return {
       data,
       model: response.model,

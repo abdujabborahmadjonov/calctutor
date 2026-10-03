@@ -74,6 +74,13 @@ export async function solve(request: SolveRequest): Promise<SolveResult> {
       const response = await client.messages.parse(
         buildSolveParams(request, maxTokens),
       );
+      // Every finished attempt counts, including a truncated or refused one.
+      logUsage(
+        "solve",
+        response.model,
+        response.usage,
+        Math.round(performance.now() - startedAt),
+      );
 
       if (response.stop_reason === "max_tokens") {
         if (attempt === 0) {
@@ -105,8 +112,6 @@ export async function solve(request: SolveRequest): Promise<SolveResult> {
 
       const solution = validateSolution(response.parsed_output);
       const latencyMs = Math.round(performance.now() - startedAt);
-
-      logUsage("solve", response.model, response.usage, latencyMs);
 
       return {
         solution,

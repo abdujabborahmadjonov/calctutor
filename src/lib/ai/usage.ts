@@ -32,6 +32,20 @@ export function recordTokenUsage(inputTokens: number, outputTokens: number) {
   usedTokens += inputTokens + outputTokens;
 }
 
+// For a stream that ended early (the student left, or an error): cancel the
+// upstream request so it stops spending, and count the usage the API had
+// reported so far. Output tokens arrive at the end of a stream, so this can
+// undercount; it never overcounts.
+export function abandonStream(stream: {
+  abort: () => void;
+  currentMessage:
+    { usage: { input_tokens: number; output_tokens: number } } | undefined;
+}) {
+  stream.abort();
+  const usage = stream.currentMessage?.usage;
+  if (usage) recordTokenUsage(usage.input_tokens, usage.output_tokens);
+}
+
 export function logUsage(
   route: string,
   model: string,

@@ -9,7 +9,7 @@ import {
   EXPLAIN_STEP_SYSTEM_PROMPT,
 } from "./prompts/explain-step";
 import type { ExplainStepRequest } from "./schemas";
-import { assertTokenBudget, logUsage } from "./usage";
+import { abandonStream, assertTokenBudget, logUsage } from "./usage";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -63,16 +63,21 @@ async function* anthropicExplainStep(
     ],
   });
 
-  for await (const event of stream) {
-    if (
-      event.type === "content_block_delta" &&
-      event.delta.type === "text_delta"
-    ) {
-      yield event.delta.text;
+  let message;
+  try {
+    for await (const event of stream) {
+      if (
+        event.type === "content_block_delta" &&
+        event.delta.type === "text_delta"
+      ) {
+        yield event.delta.text;
+      }
     }
+    message = await stream.finalMessage();
+  } finally {
+    if (!message) abandonStream(stream);
   }
 
-  const message = await stream.finalMessage();
   logUsage(
     "explain-step",
     message.model,

@@ -4,8 +4,8 @@ CalcTutor is a mobile-first calculus tutor for Alberta students. It solves
 Calculus I and II problems with named rules, plain-language explanations,
 hints, and answer checks:
 
-- Type a problem (plain English or LaTeX) or photograph it, confirm what was
-  read, and get a course-aware solution that streams in step by step.
+- Type a problem (plain English or LaTeX), photograph it, or write it with
+  Apple Pencil on the handwriting pad, confirm what was read, and get a course-aware solution that streams in step by step.
 - Strategy card, hint ladder, Learn mode, "Explain this step more", and a
   final answer checked by SymPy in the browser.
 - Check my work, graded practice problems, Markdown and PDF export, a topic

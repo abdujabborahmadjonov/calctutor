@@ -161,3 +161,21 @@
   graded as equal.
 - Card titles render as `h2` so solutions are navigable by heading, and every
   page has a "Skip to content" link.
+
+## 2026-10-03 — Handwriting mode (iPad and Apple Pencil)
+
+- Handwriting reuses the photo pipeline: the pad renders the ink on white,
+  cropped to the writing, and sends it through the same transcription and
+  confirmation screen. That gives "Solve this" and, when working is written
+  under the problem, "Check my work" without a second AI path.
+- Strokes are captured with Pointer Events, including coalesced events for
+  full-rate Apple Pencil samples; pen strokes vary in width with pressure.
+- Palm rejection: once a `pen` pointer has been seen, `touch` pointers are
+  ignored for the rest of that pad session. Before that, a finger or a mouse
+  can write, so the pad also works without a stylus.
+- The eraser removes whole strokes it touches (stroke eraser), which keeps
+  undo and redo simple: every change commits a new stroke list.
+- The pad is a real modal rendered at the top level: the rest of the page is
+  `inert` and cannot scroll while you write, and Escape closes it.
+- iPad text fields already support Scribble (handwriting into text), so the
+  problem box accepts Apple Pencil input natively as well.

@@ -140,6 +140,21 @@ const scenarios: Scenario[] = [
     },
   },
   {
+    name: "handwriting-pad",
+    run: async (page) => {
+      await page.goto("/");
+      await page
+        .getByRole("button", { name: "Write with Apple Pencil" })
+        .click();
+      const box = await page.getByLabel("Writing area").boundingBox();
+      if (!box) throw new Error("the writing area is not visible");
+      await page.mouse.move(box.x + 60, box.y + 60);
+      await page.mouse.down();
+      await page.mouse.move(box.x + 160, box.y + 120, { steps: 10 });
+      await page.mouse.up();
+    },
+  },
+  {
     name: "check-work",
     run: async (page) => {
       await page.goto("/");

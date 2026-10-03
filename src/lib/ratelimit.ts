@@ -9,6 +9,7 @@ export type RateLimitResult =
   | { allowed: true; retryAfterSeconds: 0 }
   | { allowed: false; retryAfterSeconds: number };
 
+const HOUR_MS = 60 * 60 * 1_000;
 const buckets = new Map<string, Bucket>();
 
 export function consumeRateLimit(
@@ -16,12 +17,14 @@ export function consumeRateLimit(
   capacity: number,
   now = Date.now(),
 ): RateLimitResult {
-  const refillPerMillisecond = capacity / (60 * 60 * 1_000);
+  // Multiply before dividing: capacity / HOUR_MS * elapsed loses precision,
+  // so a full refill period could leave 0.999... tokens and refuse a client
+  // that waited exactly the advertised Retry-After.
   const previous = buckets.get(key) ?? { tokens: capacity, updatedAt: now };
   const elapsed = Math.max(0, now - previous.updatedAt);
   const available = Math.min(
     capacity,
-    previous.tokens + elapsed * refillPerMillisecond,
+    previous.tokens + (elapsed * capacity) / HOUR_MS,
   );
 
   if (available < 1) {
@@ -30,7 +33,7 @@ export function consumeRateLimit(
       allowed: false,
       retryAfterSeconds: Math.max(
         1,
-        Math.ceil((1 - available) / refillPerMillisecond / 1_000),
+        Math.ceil(((1 - available) * HOUR_MS) / capacity / 1_000),
       ),
     };
   }

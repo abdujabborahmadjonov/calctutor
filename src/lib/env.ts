@@ -12,11 +12,15 @@ const EnvSchema = z.object({
   NODE_ENV: z
     .enum(["development", "test", "production"])
     .default("development"),
-  ANTHROPIC_API_KEY: z.string().startsWith("sk-ant-").optional(),
+  // A blank line in .env (as in .env.example) means "not set".
+  ANTHROPIC_API_KEY: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.string().startsWith("sk-ant-").optional(),
+  ),
   ANTHROPIC_MODEL_SOLVE: z.string().default("claude-sonnet-5-5"),
   ANTHROPIC_MODEL_TRANSCRIBE: z.string().default("claude-sonnet-5-5"),
   ANTHROPIC_MODEL_LIGHT: z.string().default("claude-haiku-4-5-20251001"),
-  AI_STREAMING: booleanString.default(false),
+  AI_STREAMING: booleanString.default(true),
   MOCK_AI: booleanString.default(false),
   LOG_PROBLEMS: booleanString.default(false),
   DAILY_TOKEN_BUDGET: positiveInteger.default(2_000_000),

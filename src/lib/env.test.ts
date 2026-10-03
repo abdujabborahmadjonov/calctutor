@@ -10,7 +10,7 @@ describe("parseEnv", () => {
 
     expect(result).toMatchObject({
       MOCK_AI: true,
-      AI_STREAMING: false,
+      AI_STREAMING: true,
       DAILY_TOKEN_BUDGET: 2_000_000,
       RATE_LIMIT_SOLVES_PER_HOUR: 30,
       RATE_LIMIT_TRANSCRIBES_PER_HOUR: 30,
@@ -24,6 +24,12 @@ describe("parseEnv", () => {
         ANTHROPIC_API_KEY: "not-an-anthropic-key",
       }),
     ).toThrow("ANTHROPIC_API_KEY");
+  });
+
+  it("treats a blank API key line as unset", () => {
+    expect(
+      parseEnv({ MOCK_AI: "true", ANTHROPIC_API_KEY: "" }).ANTHROPIC_API_KEY,
+    ).toBeUndefined();
   });
 
   it("reports invalid numeric limits clearly", () => {

@@ -23,6 +23,7 @@ type PhotoState =
 
 type PhotoInputProps = {
   onSolve: (latex: string) => void;
+  onCheckWork: (latex: string, studentWork: string) => void;
   disabled: boolean;
 };
 
@@ -38,7 +39,11 @@ function ReadingState() {
   );
 }
 
-export function PhotoInput({ onSolve, disabled }: PhotoInputProps) {
+export function PhotoInput({
+  onSolve,
+  onCheckWork,
+  disabled,
+}: PhotoInputProps) {
   const [state, setState] = useState<PhotoState>({ stage: "idle" });
   const [error, setError] = useState("");
   const previewUrl = state.stage === "idle" ? undefined : state.previewUrl;
@@ -130,6 +135,10 @@ export function PhotoInput({ onSolve, disabled }: PhotoInputProps) {
             onSolve={(latex) => {
               setState({ stage: "idle" });
               onSolve(latex);
+            }}
+            onCheckWork={(latex, studentWork) => {
+              setState({ stage: "idle" });
+              onCheckWork(latex, studentWork);
             }}
           />
         )}

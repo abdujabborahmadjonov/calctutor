@@ -16,7 +16,7 @@ export function HintLadder({ hints, onRevealSolution }: HintLadderProps) {
   if (hints.length === 0) return null;
 
   return (
-    <Card>
+    <Card className="print:hidden">
       <CardHeader>
         <CardTitle>Hint ladder</CardTitle>
         <p className="text-sm text-muted-foreground">

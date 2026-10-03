@@ -16,6 +16,7 @@ type TranscriptionConfirmProps = {
   transcription: Transcription;
   isMock: boolean;
   onSolve: (latex: string) => void;
+  onCheckWork?: (latex: string, studentWork: string) => void;
   onRetake: () => void;
 };
 
@@ -29,6 +30,7 @@ export function TranscriptionConfirm({
   transcription,
   isMock,
   onSolve,
+  onCheckWork,
   onRetake,
 }: TranscriptionConfirmProps) {
   const { problems, image_quality_note: qualityNote } = transcription;
@@ -144,7 +146,7 @@ export function TranscriptionConfirm({
           {problem.student_work_latex && (
             <p className="text-xs text-muted-foreground">
               Your own working was also in the photo. It is left out of the
-              problem.
+              problem, and you can have it checked instead of solving.
             </p>
           )}
         </div>
@@ -160,6 +162,19 @@ export function TranscriptionConfirm({
             onClick={() => onSolve(latex.trim())}
           >
             Solve this
+          </Button>
+        )}
+        {problem?.student_work_latex && onCheckWork && (
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            disabled={!latex.trim()}
+            onClick={() =>
+              onCheckWork(latex.trim(), problem.student_work_latex)
+            }
+          >
+            Check my work
           </Button>
         )}
         <Button type="button" variant="outline" size="lg" onClick={onRetake}>

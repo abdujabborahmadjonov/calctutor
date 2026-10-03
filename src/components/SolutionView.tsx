@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Copy, ShieldCheck } from "lucide-react";
 
 import type { Solution } from "@/lib/ai/schemas";
+import { topicById } from "@/lib/curriculum/alberta";
 
+import { AnswerCheck } from "./AnswerCheck";
+import { FinalAnswerCard } from "./FinalAnswerCard";
 import { HintLadder } from "./HintLadder";
-import { Math } from "./Math";
 import { StepCard } from "./StepCard";
 import { StrategyCard } from "./StrategyCard";
 import { Button } from "./ui/button";
@@ -16,16 +17,19 @@ type SolutionViewProps = {
   problemLatex: string;
   solution: Solution;
   learnMode: boolean;
+  courseId: string;
+  coveredUpTo: string;
 };
 
 export function SolutionView({
   problemLatex,
   solution,
   learnMode,
+  courseId,
+  coveredUpTo,
 }: SolutionViewProps) {
   const [solutionRevealed, setSolutionRevealed] = useState(!learnMode);
   const [visibleSteps, setVisibleSteps] = useState(1);
-  const [copied, setCopied] = useState(false);
 
   if (solution.status === "needs_clarification") {
     return (
@@ -58,12 +62,6 @@ export function SolutionView({
 
   const allStepsVisible = visibleSteps >= solution.steps.length;
 
-  const copyFinalAnswer = async () => {
-    await navigator.clipboard.writeText(solution.final_answer.latex);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1_500);
-  };
-
   return (
     <div className="space-y-5">
       <StrategyCard strategy={solution.strategy} />
@@ -76,6 +74,16 @@ export function SolutionView({
             : undefined
         }
       />
+
+      {!solutionRevealed && (
+        <div className="rounded-xl border p-4 print:hidden">
+          <AnswerCheck
+            expectedLatex={solution.final_answer.latex}
+            label="Try it yourself, then check your final answer"
+            allowReveal={false}
+          />
+        </div>
+      )}
 
       {solutionRevealed && (
         <>
@@ -109,40 +117,17 @@ export function SolutionView({
           )}
 
           {allStepsVisible && (
-            <Card className="border-2 border-primary/30">
-              <CardHeader>
-                <div className="flex items-center justify-between gap-3">
-                  <CardTitle>Final answer</CardTitle>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    aria-label="Copy final answer LaTeX"
-                    onClick={copyFinalAnswer}
-                  >
-                    {copied ? <Check /> : <Copy />}
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="overflow-x-auto rounded-lg bg-muted/40 p-4">
-                  <Math latex={solution.final_answer.latex} display />
-                </div>
-                <p>{solution.final_answer.plain}</p>
-                {solution.final_answer.domain_notes && (
-                  <p className="text-sm text-muted-foreground">
-                    {solution.final_answer.domain_notes}
-                  </p>
-                )}
-                <div className="flex items-start gap-2 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-950 dark:bg-emerald-950/30 dark:text-emerald-100">
-                  <ShieldCheck className="mt-0.5 size-4 shrink-0" />
-                  <span>
-                    Self-checked by {solution.check.method}.{" "}
-                    {solution.check.detail}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
+            <FinalAnswerCard
+              solution={solution}
+              practice={{
+                problemLatex,
+                topicId: topicById.has(solution.problem.topic_id)
+                  ? solution.problem.topic_id
+                  : coveredUpTo,
+                courseId,
+                coveredUpTo,
+              }}
+            />
           )}
         </>
       )}

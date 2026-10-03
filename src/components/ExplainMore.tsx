@@ -87,7 +87,7 @@ export function ExplainMore({
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 print:hidden">
       <Button
         type="button"
         variant="link"

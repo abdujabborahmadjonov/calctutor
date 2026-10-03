@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AlertTriangle, BookOpen } from "lucide-react";
+import { BookOpen } from "lucide-react";
 
 import type { Problem } from "@/lib/ai/schemas";
 import { courseById, DEFAULT_COURSE_ID } from "@/lib/curriculum/alberta";
@@ -9,14 +9,13 @@ import { getDefaultCoveredUpTo } from "@/lib/curriculum/allowed";
 import { getSetting, setSetting } from "@/lib/storage/history";
 
 import { CourseSelector } from "./CourseSelector";
+import { CheckWorkInput } from "./CheckWorkInput";
 import { PhotoInput } from "./PhotoInput";
 import { ProblemInput } from "./ProblemInput";
-import { SolutionView } from "./SolutionView";
-import { StreamingSolution } from "./StreamingSolution";
-import { Badge } from "./ui/badge";
-import { Button } from "./ui/button";
+import { ResultPanel } from "./ResultPanel";
 import { Card, CardContent } from "./ui/card";
 import { Switch } from "./ui/switch";
+import { useCheckWork } from "./useCheckWork";
 import { useSolver } from "./useSolver";
 
 export function SolverClient() {
@@ -25,16 +24,15 @@ export function SolverClient() {
   const [coveredUpTo, setCoveredUpTo] = useState(() => getDefaultCoveredUpTo());
   const [learnMode, setLearnMode] = useState(false);
   const [lastSource, setLastSource] = useState<Problem["source"]>("text");
-  const {
-    solve,
-    solution,
-    solvedLatex,
-    partial,
-    isSolving,
-    error,
-    storageWarning,
-    aiMode,
-  } = useSolver();
+  const [view, setView] = useState<"solve" | "check">("solve");
+  const { solve, ...solveState } = useSolver();
+  const checkWork = useCheckWork();
+  const checkState = {
+    checked: checkWork.checked,
+    isChecking: checkWork.isChecking,
+    error: checkWork.error,
+  };
+  const busy = solveState.isSolving || checkWork.isChecking;
 
   useEffect(() => {
     void Promise.all([
@@ -70,7 +68,7 @@ export function SolverClient() {
   // when a solve starts; on the two-column desktop layout it is already
   // visible.
   useEffect(() => {
-    if (!isSolving || window.matchMedia("(min-width: 1024px)").matches) return;
+    if (!busy || window.matchMedia("(min-width: 1024px)").matches) return;
     const reduceMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
@@ -78,7 +76,7 @@ export function SolverClient() {
       behavior: reduceMotion ? "auto" : "smooth",
       block: "start",
     });
-  }, [isSolving]);
+  }, [busy]);
 
   const changeCourse = (nextCourseId: string) => {
     const nextCovered = getDefaultCoveredUpTo(nextCourseId);
@@ -99,6 +97,8 @@ export function SolverClient() {
   };
 
   const solveProblem = (latex: string, source: Problem["source"]) => {
+    setView("solve");
+    setProblem(latex);
     setLastSource(source);
     void solve({ latex, source, courseId, coveredUpTo });
   };
@@ -108,9 +108,31 @@ export function SolverClient() {
     solveProblem(latex, "image");
   };
 
+  const checkProblemWork = (problemLatex: string, studentWork: string) => {
+    setView("check");
+    void checkWork.check({ problemLatex, studentWork, courseId, coveredUpTo });
+  };
+
+  const checkFromPhoto = (latex: string, studentWork: string) => {
+    setProblem(latex);
+    setLastSource("image");
+    checkProblemWork(latex, studentWork);
+  };
+
+  const retry = () => {
+    if (view === "check" && checkWork.lastInput) {
+      checkProblemWork(
+        checkWork.lastInput.problemLatex,
+        checkWork.lastInput.studentWork,
+      );
+    } else {
+      solveProblem(problem, lastSource);
+    }
+  };
+
   return (
     <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6">
-      <div className="mb-7 space-y-2">
+      <div className="mb-7 space-y-2 print:hidden">
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
           Work through calculus, one step at a time.
         </h1>
@@ -120,7 +142,7 @@ export function SolverClient() {
         </p>
       </div>
 
-      <Card className="mb-6">
+      <Card className="mb-6 print:hidden">
         <CardContent className="grid gap-5 py-5 lg:grid-cols-[1fr_auto] lg:items-end">
           <CourseSelector
             courseId={courseId}
@@ -136,68 +158,37 @@ export function SolverClient() {
         </CardContent>
       </Card>
 
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-        <div className="space-y-6">
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] print:block">
+        <div className="space-y-6 print:hidden">
           <ProblemInput
             value={problem}
             onChange={setProblem}
             onSolve={() => solveProblem(problem, "text")}
-            isSolving={isSolving}
+            isSolving={busy}
           />
-          <PhotoInput onSolve={solveFromPhoto} disabled={isSolving} />
+          <PhotoInput
+            onSolve={solveFromPhoto}
+            onCheckWork={checkFromPhoto}
+            disabled={busy}
+          />
+          <CheckWorkInput
+            hasProblem={Boolean(problem.trim())}
+            disabled={busy}
+            onCheck={(studentWork) => checkProblemWork(problem, studentWork)}
+          />
         </div>
 
-        <section
+        <ResultPanel
           ref={solutionSection}
-          className="scroll-mt-4 space-y-4"
-          aria-label="Solution"
-        >
-          {aiMode === "mock" && solution && (
-            <Badge variant="outline">Mock fixture response</Badge>
-          )}
-          {error && (
-            <Card className="border-destructive/40">
-              <CardContent className="flex flex-wrap items-center gap-3 py-5 text-sm">
-                <AlertTriangle className="size-5 shrink-0 text-destructive" />
-                <span className="min-w-0 flex-1">{error}</span>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => solveProblem(problem, lastSource)}
-                >
-                  Try again
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-          {storageWarning && (
-            <p className="text-sm text-amber-700 dark:text-amber-300">
-              {storageWarning}
-            </p>
-          )}
-          {isSolving && (
-            <StreamingSolution
-              partial={partial ?? { steps: [] }}
-              learnMode={learnMode}
-            />
-          )}
-          {solution && (
-            <SolutionView
-              key={`${solution.problem.restated_latex}-${learnMode}`}
-              problemLatex={solvedLatex}
-              solution={solution}
-              learnMode={learnMode}
-            />
-          )}
-          {!solution && !isSolving && !error && (
-            <Card className="border-dashed">
-              <CardContent className="py-14 text-center text-sm text-muted-foreground">
-                Your strategy and step-by-step solution will appear here.
-              </CardContent>
-            </Card>
-          )}
-        </section>
+          view={view}
+          learnMode={learnMode}
+          courseId={courseId}
+          coveredUpTo={coveredUpTo}
+          solve={solveState}
+          checkWork={checkState}
+          onRetry={retry}
+          onShowSolution={(latex) => solveProblem(latex, lastSource)}
+        />
       </div>
     </main>
   );

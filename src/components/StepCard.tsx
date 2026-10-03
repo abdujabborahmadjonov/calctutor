@@ -39,6 +39,7 @@ export function StepCard({ step, index, explain }: StepCardProps) {
             type="button"
             variant="ghost"
             size="icon-sm"
+            className="print:hidden"
             aria-label={`Copy LaTeX for step ${index + 1}`}
             onClick={copyLatex}
           >

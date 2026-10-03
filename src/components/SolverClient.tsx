@@ -1,46 +1,40 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, BookOpen } from "lucide-react";
 
-import {
-  type Solution,
-  SolutionSchema,
-  type SolutionRecord,
-} from "@/lib/ai/schemas";
+import type { Problem } from "@/lib/ai/schemas";
 import { courseById, DEFAULT_COURSE_ID } from "@/lib/curriculum/alberta";
 import { getDefaultCoveredUpTo } from "@/lib/curriculum/allowed";
-import {
-  getSetting,
-  saveHistoryEntry,
-  setSetting,
-} from "@/lib/storage/history";
+import { getSetting, setSetting } from "@/lib/storage/history";
 
 import { CourseSelector } from "./CourseSelector";
+import { PhotoInput } from "./PhotoInput";
 import { ProblemInput } from "./ProblemInput";
 import { SolutionView } from "./SolutionView";
-import { SolvingState } from "./SolvingState";
+import { StreamingSolution } from "./StreamingSolution";
 import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 import { Switch } from "./ui/switch";
-
-type ApiError = {
-  error?: {
-    code?: string;
-    message?: string;
-  };
-};
+import { useSolver } from "./useSolver";
 
 export function SolverClient() {
   const [problem, setProblem] = useState("");
   const [courseId, setCourseId] = useState(DEFAULT_COURSE_ID);
   const [coveredUpTo, setCoveredUpTo] = useState(() => getDefaultCoveredUpTo());
   const [learnMode, setLearnMode] = useState(false);
-  const [solution, setSolution] = useState<Solution>();
-  const [isSolving, setIsSolving] = useState(false);
-  const [error, setError] = useState("");
-  const [storageWarning, setStorageWarning] = useState("");
-  const [aiMode, setAiMode] = useState<"mock" | "anthropic">();
+  const [lastSource, setLastSource] = useState<Problem["source"]>("text");
+  const {
+    solve,
+    solution,
+    solvedLatex,
+    partial,
+    isSolving,
+    error,
+    storageWarning,
+    aiMode,
+  } = useSolver();
 
   useEffect(() => {
     void Promise.all([
@@ -70,6 +64,22 @@ export function SolverClient() {
     });
   }, []);
 
+  const solutionSection = useRef<HTMLElement>(null);
+
+  // On a phone the solution sits below both inputs, so bring it into view
+  // when a solve starts; on the two-column desktop layout it is already
+  // visible.
+  useEffect(() => {
+    if (!isSolving || window.matchMedia("(min-width: 1024px)").matches) return;
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    solutionSection.current?.scrollIntoView({
+      behavior: reduceMotion ? "auto" : "smooth",
+      block: "start",
+    });
+  }, [isSolving]);
+
   const changeCourse = (nextCourseId: string) => {
     const nextCovered = getDefaultCoveredUpTo(nextCourseId);
     setCourseId(nextCourseId);
@@ -88,96 +98,14 @@ export function SolverClient() {
     void setSetting("learnMode", checked);
   };
 
-  const solveProblem = async () => {
-    if (!problem.trim() || isSolving) return;
+  const solveProblem = (latex: string, source: Problem["source"]) => {
+    setLastSource(source);
+    void solve({ latex, source, courseId, coveredUpTo });
+  };
 
-    setIsSolving(true);
-    setError("");
-    setStorageWarning("");
-    setSolution(undefined);
-
-    try {
-      const response = await fetch("/api/solve", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          problemLatex: problem,
-          courseId,
-          coveredUpTo,
-          mode: "full",
-        }),
-      });
-      const data: unknown = await response.json();
-
-      if (!response.ok) {
-        const apiError = data as ApiError;
-        throw new Error(
-          apiError.error?.message ?? "Something went wrong on our side.",
-        );
-      }
-
-      const nextSolution = SolutionSchema.parse(data);
-      const now = new Date().toISOString();
-      const problemId = crypto.randomUUID();
-      const mode =
-        response.headers.get("X-CalcTutor-AI-Mode") === "mock"
-          ? "mock"
-          : "anthropic";
-      const record: SolutionRecord = {
-        problemId,
-        solution: nextSolution,
-        model: response.headers.get("X-CalcTutor-Model") ?? "unknown",
-        usage: {
-          inputTokens: Number(
-            response.headers.get("X-CalcTutor-Input-Tokens") ?? 0,
-          ),
-          outputTokens: Number(
-            response.headers.get("X-CalcTutor-Output-Tokens") ?? 0,
-          ),
-        },
-        latencyMs: Number(response.headers.get("X-CalcTutor-Latency-Ms") ?? 0),
-        createdAt: now,
-      };
-
-      setSolution(nextSolution);
-      setAiMode(mode);
-
-      if (nextSolution.status === "solved") {
-        try {
-          await saveHistoryEntry({
-            id: problemId,
-            problem: {
-              id: problemId,
-              source: "text",
-              latex: problem,
-              plain: problem,
-              courseId,
-              coveredUpTo,
-              topicId: nextSolution.problem.topic_id,
-              createdAt: now,
-            },
-            record,
-          });
-        } catch (historyError) {
-          console.error(
-            "[CalcTutor] Could not save local history",
-            historyError,
-          );
-          setStorageWarning(
-            "The solution worked, but this browser could not save it to history.",
-          );
-        }
-      }
-    } catch (solveError) {
-      console.error("[CalcTutor] Solve failed", solveError);
-      setError(
-        solveError instanceof Error
-          ? solveError.message
-          : "Something went wrong on our side.",
-      );
-    } finally {
-      setIsSolving(false);
-    }
+  const solveFromPhoto = (latex: string) => {
+    setProblem(latex);
+    solveProblem(latex, "image");
   };
 
   return (
@@ -187,8 +115,8 @@ export function SolverClient() {
           Work through calculus, one step at a time.
         </h1>
         <p className="max-w-3xl text-muted-foreground">
-          Type a problem in plain English or LaTeX. CalcTutor will choose an
-          allowed method for your course and explain every move.
+          Type a problem in plain English or LaTeX, or photograph it. CalcTutor
+          will choose an allowed method for your course and explain every move.
         </p>
       </div>
 
@@ -209,22 +137,37 @@ export function SolverClient() {
       </Card>
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-        <ProblemInput
-          value={problem}
-          onChange={setProblem}
-          onSolve={solveProblem}
-          isSolving={isSolving}
-        />
+        <div className="space-y-6">
+          <ProblemInput
+            value={problem}
+            onChange={setProblem}
+            onSolve={() => solveProblem(problem, "text")}
+            isSolving={isSolving}
+          />
+          <PhotoInput onSolve={solveFromPhoto} disabled={isSolving} />
+        </div>
 
-        <section className="space-y-4" aria-label="Solution">
+        <section
+          ref={solutionSection}
+          className="scroll-mt-4 space-y-4"
+          aria-label="Solution"
+        >
           {aiMode === "mock" && solution && (
             <Badge variant="outline">Mock fixture response</Badge>
           )}
           {error && (
             <Card className="border-destructive/40">
-              <CardContent className="flex gap-3 py-5 text-sm">
+              <CardContent className="flex flex-wrap items-center gap-3 py-5 text-sm">
                 <AlertTriangle className="size-5 shrink-0 text-destructive" />
-                <span>{error}</span>
+                <span className="min-w-0 flex-1">{error}</span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => solveProblem(problem, lastSource)}
+                >
+                  Try again
+                </Button>
               </CardContent>
             </Card>
           )}
@@ -233,10 +176,16 @@ export function SolverClient() {
               {storageWarning}
             </p>
           )}
-          {isSolving && <SolvingState />}
+          {isSolving && (
+            <StreamingSolution
+              partial={partial ?? { steps: [] }}
+              learnMode={learnMode}
+            />
+          )}
           {solution && (
             <SolutionView
               key={`${solution.problem.restated_latex}-${learnMode}`}
+              problemLatex={solvedLatex}
               solution={solution}
               learnMode={learnMode}
             />

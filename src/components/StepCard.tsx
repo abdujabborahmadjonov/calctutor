@@ -5,6 +5,7 @@ import { Check, Copy } from "lucide-react";
 
 import type { Step } from "@/lib/ai/schemas";
 
+import { type ExplainContext, ExplainMore } from "./ExplainMore";
 import { Markdown } from "./Markdown";
 import { Math } from "./Math";
 import { Badge } from "./ui/badge";
@@ -14,9 +15,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 type StepCardProps = {
   step: Step;
   index: number;
+  explain?: ExplainContext;
 };
 
-export function StepCard({ step, index }: StepCardProps) {
+export function StepCard({ step, index, explain }: StepCardProps) {
   const [copied, setCopied] = useState(false);
 
   const copyLatex = async () => {
@@ -57,6 +59,7 @@ export function StepCard({ step, index }: StepCardProps) {
             <strong>Common mistake:</strong> {step.common_mistake}
           </aside>
         )}
+        {explain && <ExplainMore {...explain} stepIndex={index} />}
       </CardContent>
     </Card>
   );

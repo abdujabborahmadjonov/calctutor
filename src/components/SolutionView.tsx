@@ -6,19 +6,23 @@ import { Check, Copy, ShieldCheck } from "lucide-react";
 import type { Solution } from "@/lib/ai/schemas";
 
 import { HintLadder } from "./HintLadder";
-import { Markdown } from "./Markdown";
 import { Math } from "./Math";
 import { StepCard } from "./StepCard";
-import { Badge } from "./ui/badge";
+import { StrategyCard } from "./StrategyCard";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 
 type SolutionViewProps = {
+  problemLatex: string;
   solution: Solution;
   learnMode: boolean;
 };
 
-export function SolutionView({ solution, learnMode }: SolutionViewProps) {
+export function SolutionView({
+  problemLatex,
+  solution,
+  learnMode,
+}: SolutionViewProps) {
   const [solutionRevealed, setSolutionRevealed] = useState(!learnMode);
   const [visibleSteps, setVisibleSteps] = useState(1);
   const [copied, setCopied] = useState(false);
@@ -62,22 +66,7 @@ export function SolutionView({ solution, learnMode }: SolutionViewProps) {
 
   return (
     <div className="space-y-5">
-      <Card className="border-primary/20 bg-primary/[0.03]">
-        <CardHeader className="gap-3">
-          <Badge className="w-fit">Strategy</Badge>
-          <CardTitle>{solution.strategy.method}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4 text-sm">
-          <div>
-            <strong>Why it fits</strong>
-            <Markdown>{solution.strategy.why_this_method}</Markdown>
-          </div>
-          <div>
-            <strong>Other approaches</strong>
-            <Markdown>{solution.strategy.alternatives}</Markdown>
-          </div>
-        </CardContent>
-      </Card>
+      <StrategyCard strategy={solution.strategy} />
 
       <HintLadder
         hints={solution.hints}
@@ -96,6 +85,7 @@ export function SolutionView({ solution, learnMode }: SolutionViewProps) {
                 key={`${step.title}-${index}`}
                 step={step}
                 index={index}
+                explain={{ problemLatex, solution }}
               />
             ))}
           </div>

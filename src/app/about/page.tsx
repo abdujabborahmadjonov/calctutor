@@ -6,7 +6,11 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-12 sm:px-6">
+    <main
+      id="main"
+      tabIndex={-1}
+      className="mx-auto w-full outline-none max-w-3xl flex-1 px-4 py-12 sm:px-6"
+    >
       <h1 className="text-3xl font-semibold tracking-tight">About CalcTutor</h1>
       <div className="mt-6 space-y-5 leading-7 text-foreground/85">
         <p>

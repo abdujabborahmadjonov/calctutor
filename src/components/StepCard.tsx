@@ -32,7 +32,7 @@ export function StepCard({ step, index, explain }: StepCardProps) {
       <CardHeader className="gap-3">
         <div className="flex items-start justify-between gap-3">
           <CardTitle className="text-base">
-            <span className="mr-2 text-muted-foreground">{index + 1}.</span>
+            <span className="mr-2 text-muted-foreground">{index + 1}.</span>{" "}
             {step.title}
           </CardTitle>
           <Button

@@ -131,7 +131,11 @@ export function SolverClient() {
   };
 
   return (
-    <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6">
+    <main
+      id="main"
+      tabIndex={-1}
+      className="mx-auto w-full outline-none max-w-7xl flex-1 px-4 py-8 sm:px-6"
+    >
       <div className="mb-7 space-y-2 print:hidden">
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
           Work through calculus, one step at a time.
@@ -153,7 +157,11 @@ export function SolverClient() {
           <label className="flex items-center gap-3 rounded-lg border px-3 py-2">
             <BookOpen className="size-4" />
             <span className="text-sm font-medium">Learn mode</span>
-            <Switch checked={learnMode} onCheckedChange={changeLearnMode} />
+            <Switch
+              checked={learnMode}
+              onCheckedChange={changeLearnMode}
+              aria-label="Learn mode"
+            />
           </label>
         </CardContent>
       </Card>

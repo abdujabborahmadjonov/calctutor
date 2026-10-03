@@ -19,9 +19,11 @@ test("solving the integration-by-parts golden problem shows the strategy and the
 
   await expect(page.getByText("Strategy", { exact: true })).toBeVisible();
   await expect(
-    page.getByText("Integration by parts", { exact: true }).first(),
+    page.getByRole("heading", { name: "Integration by parts" }),
   ).toBeVisible();
-  await expect(page.getByText("Choose the parts")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: /Choose the parts/ }),
+  ).toBeVisible();
   await expect(page.getByRole("button", { name: "Next step" })).toBeVisible();
 
   expect(errors).toEqual([]);

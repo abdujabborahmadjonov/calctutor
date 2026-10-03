@@ -77,7 +77,11 @@ export function HistoryClient() {
   };
 
   return (
-    <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6">
+    <main
+      id="main"
+      tabIndex={-1}
+      className="mx-auto w-full outline-none max-w-5xl flex-1 px-4 py-8 sm:px-6"
+    >
       <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">History</h1>

@@ -34,7 +34,11 @@ export default async function TopicPage({ params }: TopicPageProps) {
   })}`;
 
   return (
-    <main className="mx-auto w-full max-w-3xl flex-1 space-y-8 px-4 py-8 sm:px-6">
+    <main
+      id="main"
+      tabIndex={-1}
+      className="mx-auto w-full outline-none max-w-3xl flex-1 space-y-8 px-4 py-8 sm:px-6"
+    >
       <div className="space-y-3">
         <Link
           href="/topics"

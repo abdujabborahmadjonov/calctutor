@@ -13,10 +13,12 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "smoke": "node --experimental-strip-types scripts/smoke.ts",
+    "smoke": "tsx --conditions=react-server scripts/smoke.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "vendor:pyodide": "node --experimental-strip-types scripts/vendor-pyodide.ts"
+    "vendor:pyodide": "node --experimental-strip-types scripts/vendor-pyodide.ts",
+    "test:e2e": "playwright test",
+    "screenshots": "tsx scripts/screenshots.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.131.0",
@@ -39,6 +41,7 @@
     "zod": "4.6.5"
   },
   "devDependencies": {
+    "@playwright/test": "1.56.1",
     "@tailwindcss/postcss": "4.3.3",
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.3",
@@ -51,6 +54,7 @@
     "jsdom": "29.1.1",
     "prettier": "3.9.9",
     "tailwindcss": "4.3.3",
+    "tsx": "4.23.15",
     "typescript": "5.9.3",
     "vitest": "5.0.3"
   },

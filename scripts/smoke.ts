@@ -119,9 +119,96 @@ const cases: GoldenCase[] = [
 
 const baseUrl = process.env.SMOKE_BASE_URL ?? "http://127.0.0.1:43127";
 const expectedMode = process.env.SMOKE_EXPECT_MODE ?? "mock";
+const transcribeImage =
+  process.env.SMOKE_TRANSCRIBE_IMAGE ??
+  new URL("./fixtures/handwritten-x2-lnx.jpg", import.meta.url).pathname;
 let passed = 0;
+let total = 0;
 let inputTokens = 0;
 let outputTokens = 0;
+
+type SolveRead = {
+  body: SmokeSolution & { error?: { message?: string } };
+  streamed: boolean;
+  firstStepBeforeDone: boolean;
+  usage: { inputTokens: number; outputTokens: number };
+};
+
+// A step is complete once the text holds the start of the next step or the
+// end of the steps array.
+const hasCompleteStep = (text: string) => {
+  const steps = text.indexOf('"steps"');
+  if (steps === -1) return false;
+  const rest = text.slice(steps);
+  return /\}\s*,\s*\{/.test(rest) || /\}\s*\]/.test(rest);
+};
+
+async function readSolve(response: Response): Promise<SolveRead> {
+  const contentType = response.headers.get("content-type") ?? "";
+
+  if (!contentType.includes("ndjson")) {
+    return {
+      body: (await response.json()) as SolveRead["body"],
+      streamed: false,
+      firstStepBeforeDone: false,
+      usage: {
+        inputTokens: Number(
+          response.headers.get("x-calctutor-input-tokens") ?? 0,
+        ),
+        outputTokens: Number(
+          response.headers.get("x-calctutor-output-tokens") ?? 0,
+        ),
+      },
+    };
+  }
+
+  let text = "";
+  let firstStepBeforeDone = false;
+
+  for (const line of (await response.text()).split("\n")) {
+    if (!line.trim()) continue;
+    const event = JSON.parse(line) as {
+      type: string;
+      text?: string;
+      solution?: SmokeSolution;
+      usage?: SolveRead["usage"];
+      error?: { message?: string };
+    };
+
+    if (event.type === "delta") {
+      text += event.text ?? "";
+      firstStepBeforeDone ||= hasCompleteStep(text);
+    } else if (event.type === "reset") {
+      text = "";
+    } else if (event.type === "done" && event.solution) {
+      return {
+        body: event.solution,
+        streamed: true,
+        firstStepBeforeDone,
+        usage: event.usage ?? { inputTokens: 0, outputTokens: 0 },
+      };
+    } else if (event.type === "error") {
+      return {
+        body: { error: event.error } as SolveRead["body"],
+        streamed: true,
+        firstStepBeforeDone,
+        usage: { inputTokens: 0, outputTokens: 0 },
+      };
+    }
+  }
+
+  throw new Error("stream ended without a done event");
+}
+
+const report = (name: string, ok: boolean, detail: string) => {
+  total += 1;
+  if (ok) {
+    passed += 1;
+    console.log(`PASS ${name}`);
+  } else {
+    console.error(`FAIL ${name}: ${detail}`);
+  }
+};
 
 for (const golden of cases) {
   try {
@@ -136,33 +223,71 @@ for (const golden of cases) {
       }),
     });
     const mode = response.headers.get("x-calctutor-ai-mode");
-    inputTokens += Number(
-      response.headers.get("x-calctutor-input-tokens") ?? 0,
-    );
-    outputTokens += Number(
-      response.headers.get("x-calctutor-output-tokens") ?? 0,
-    );
-    const body = (await response.json()) as SmokeSolution & {
-      error?: { message?: string };
-    };
-    const valid = response.ok && mode === expectedMode && golden.validate(body);
+    const read = await readSolve(response);
+    inputTokens += read.usage.inputTokens;
+    outputTokens += read.usage.outputTokens;
 
-    if (valid) {
-      passed += 1;
-      console.log(`PASS ${golden.name}`);
-    } else {
-      console.error(
-        `FAIL ${golden.name}: HTTP ${response.status}, mode=${mode}, body=${JSON.stringify(body)}`,
-      );
-    }
+    // Streaming must render the first step before the solve finishes;
+    // solutions with no steps (clarification, out of scope) are exempt.
+    const streamOk =
+      !read.streamed ||
+      read.body.status !== "solved" ||
+      read.firstStepBeforeDone;
+    report(
+      golden.name,
+      response.ok &&
+        mode === expectedMode &&
+        streamOk &&
+        golden.validate(read.body),
+      `HTTP ${response.status}, mode=${mode}, streamed=${read.streamed}, firstStepBeforeDone=${read.firstStepBeforeDone}, body=${JSON.stringify(read.body)}`,
+    );
   } catch (error) {
-    console.error(`FAIL ${golden.name}:`, error);
+    report(golden.name, false, String(error));
   }
+}
+
+try {
+  const { readFile } = await import("node:fs/promises");
+  const image = await readFile(transcribeImage);
+  const response = await fetch(`${baseUrl}/api/transcribe`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      mediaType: "image/jpeg",
+      data: image.toString("base64"),
+    }),
+  });
+  const mode = response.headers.get("x-calctutor-ai-mode");
+  const body = (await response.json()) as {
+    problems?: Array<{ latex: string; confidence: string }>;
+  };
+  const first = body.problems?.[0];
+  const compact = first?.latex.replaceAll(/\s+/g, "") ?? "";
+  // Mock mode serves a fixed fixture, so only its shape can be checked.
+  const valid =
+    expectedMode === "mock"
+      ? Boolean(first)
+      : /x\^\{?2\}?\\ln/.test(compact) &&
+        compact.includes("\\int") &&
+        first?.confidence === "high" &&
+        !compact.includes("=");
+
+  report(
+    "handwritten photo transcribes exactly without solving",
+    response.ok && mode === expectedMode && valid,
+    `HTTP ${response.status}, mode=${mode}, body=${JSON.stringify(body)}`,
+  );
+} catch (error) {
+  report(
+    "handwritten photo transcribes exactly without solving",
+    false,
+    String(error),
+  );
 }
 
 const estimatedCostUsd = (inputTokens * 2 + outputTokens * 10) / 1_000_000;
 console.log(
-  `RESULT mode=${expectedMode} passed=${passed}/${cases.length} input_tokens=${inputTokens} output_tokens=${outputTokens} estimated_cost_usd=${estimatedCostUsd.toFixed(4)}`,
+  `RESULT mode=${expectedMode} passed=${passed}/${total} solve_input_tokens=${inputTokens} solve_output_tokens=${outputTokens} estimated_solve_cost_usd=${estimatedCostUsd.toFixed(4)}`,
 );
 
-if (passed !== cases.length) process.exitCode = 1;
+if (passed !== total) process.exitCode = 1;

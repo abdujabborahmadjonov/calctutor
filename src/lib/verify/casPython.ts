@@ -16,7 +16,10 @@ NAMES = {"E": E, "e": E, "pi": pi, "oo": oo, "sqrt": sqrt, "exp": exp,
     "log": log, "ln": log, "sin": sin, "cos": cos, "tan": tan, "sec": sec,
     "csc": csc, "cot": cot, "asin": asin, "acos": acos, "atan": atan,
     "sinh": sinh, "cosh": cosh, "tanh": tanh, "Abs": Abs}
-SAMPLES = [0.137, 0.291, 0.443, 0.618, 0.779, 0.905, 1.37, 2.11]
+# Negative points too: answers that agree only for x > 0, such as 2 ln x and
+# ln(x^2), must not count as equal. mpmath evaluates logs of negatives as
+# complex numbers, which exposes the difference.
+SAMPLES = [-2.11, -1.37, -0.618, -0.291, 0.137, 0.291, 0.443, 0.618, 0.779, 0.905, 1.37, 2.11]
 
 def parse(text, var):
     names = dict(NAMES)

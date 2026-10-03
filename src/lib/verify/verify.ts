@@ -63,6 +63,12 @@ export function runCasCheck(plan: VerifyPlan): Promise<CasOutcome> {
       wheels: CAS_WHEELS,
       python: CAS_PYTHON,
     };
-    getWorker().postMessage({ id, plan, setup } satisfies WorkerRequest);
+    try {
+      getWorker().postMessage({ id, plan, setup } satisfies WorkerRequest);
+    } catch (error) {
+      console.warn("[CalcTutor] Could not start the SymPy worker", error);
+      pending.get(id)?.("error");
+      pending.delete(id);
+    }
   });
 }

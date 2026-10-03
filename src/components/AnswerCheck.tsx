@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { CheckCircle2, CircleHelp, XCircle } from "lucide-react";
 
 import { normalizeLatex } from "@/lib/latex/normalize";
@@ -44,14 +44,24 @@ export function AnswerCheck({
   const [showAnswer, setShowAnswer] = useState(false);
   const preview = normalizeLatex(answer);
 
+  // The first check can take seconds while SymPy loads. A result is applied
+  // only if it belongs to the latest check, so an edited answer never shows
+  // the grade of the text it replaced.
+  const latestCheck = useRef(0);
+
   const check = async () => {
     if (!answer.trim()) return;
+    const id = ++latestCheck.current;
     setChecking(true);
     setGrade(undefined);
     try {
-      setGrade(await gradeAnswer(expectedLatex, answer));
+      const result = await gradeAnswer(expectedLatex, answer);
+      if (id === latestCheck.current) setGrade(result);
+    } catch (error) {
+      console.warn("[CalcTutor] Answer check could not run", error);
+      if (id === latestCheck.current) setGrade("ungradable");
     } finally {
-      setChecking(false);
+      if (id === latestCheck.current) setChecking(false);
     }
   };
 
@@ -72,6 +82,9 @@ export function AnswerCheck({
           onChange={(event) => {
             setAnswer(event.target.value);
             setGrade(undefined);
+            // Editing the answer invalidates any check still running.
+            latestCheck.current += 1;
+            setChecking(false);
           }}
           onKeyDown={(event) => {
             if (event.key === "Enter") {

@@ -21,9 +21,16 @@ export function VerificationBadge({ solution }: { solution: Solution }) {
 
   useEffect(() => {
     let active = true;
-    void verifySolution(solution).then((verified) => {
-      if (active) setStatus(verified ? "verified" : "unverified");
-    });
+    verifySolution(solution)
+      .then((verified) => {
+        if (active) setStatus(verified ? "verified" : "unverified");
+      })
+      .catch((error: unknown) => {
+        // A worker that cannot start, or a chunk that fails to load, must
+        // still end in "Could not verify" instead of spinning forever.
+        console.warn("[CalcTutor] SymPy check could not run", error);
+        if (active) setStatus("unverified");
+      });
     return () => {
       active = false;
     };

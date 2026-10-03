@@ -40,3 +40,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# vendored at build time by scripts/vendor-pyodide.ts
+/public/pyodide/

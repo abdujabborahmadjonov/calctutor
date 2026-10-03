@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "predev": "npm run vendor:pyodide",
     "dev": "next dev",
+    "prebuild": "npm run vendor:pyodide",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
@@ -13,7 +15,8 @@
     "test:watch": "vitest",
     "smoke": "node --experimental-strip-types scripts/smoke.ts",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "vendor:pyodide": "node --experimental-strip-types scripts/vendor-pyodide.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.131.0",
@@ -25,6 +28,7 @@
     "lucide-react": "1.50.0",
     "next": "16.3.8",
     "partial-json": "0.1.7",
+    "pyodide": "314.0.7",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-markdown": "10.1.0",

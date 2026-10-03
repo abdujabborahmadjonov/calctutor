@@ -6,13 +6,11 @@
 // error states on purpose.
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { chromium, type Page } from "@playwright/test";
 
-const root = path.resolve(
-  path.dirname(new URL(import.meta.url).pathname),
-  "..",
-);
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const outDir = path.join(root, "screenshots");
 const baseUrl = process.env.BASE_URL ?? "http://127.0.0.1:3000";
 const photo = path.join(root, "scripts/fixtures/katex-x2-lnx.png");

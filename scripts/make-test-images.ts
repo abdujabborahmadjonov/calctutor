@@ -4,13 +4,11 @@
 // Run: npx tsx scripts/make-test-images.ts
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { chromium } from "@playwright/test";
 
-const root = path.resolve(
-  path.dirname(new URL(import.meta.url).pathname),
-  "..",
-);
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const out = path.join(root, "scripts", "fixtures");
 const latex = String.raw`\int x^{2}\ln x\,dx`;
 

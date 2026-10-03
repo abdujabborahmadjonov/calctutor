@@ -7,12 +7,10 @@ import { createHash } from "node:crypto";
 import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
-const root = path.resolve(
-  path.dirname(new URL(import.meta.url).pathname),
-  "..",
-);
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const target = path.join(root, "public", "pyodide");
 const pyodideDir = path.dirname(require.resolve("pyodide/package.json"));
 

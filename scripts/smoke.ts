@@ -9,14 +9,12 @@
 // "server-only" imports resolve outside Next.js.
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import nextEnv from "@next/env";
 import { z } from "zod";
 
-const root = path.resolve(
-  path.dirname(new URL(import.meta.url).pathname),
-  "..",
-);
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 nextEnv.loadEnvConfig(root);
 
 // Imported after the env files load, because lib/env reads process.env once.

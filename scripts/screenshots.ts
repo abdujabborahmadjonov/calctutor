@@ -27,7 +27,7 @@ type Scenario = {
 };
 
 const problemBox = (page: Page) =>
-  page.getByRole("textbox", { name: "Calculus problem" });
+  page.getByRole("textbox", { name: "Problem", exact: true });
 
 async function solve(page: Page, latex: string) {
   await page.goto("/");
@@ -111,7 +111,7 @@ const scenarios: Scenario[] = [
     name: "learn-mode",
     run: async (page) => {
       await page.goto("/");
-      await page.getByRole("switch").click();
+      await page.getByRole("switch", { name: "Learn mode" }).click();
       await problemBox(page).fill(String.raw`\int x e^{x}\,dx`);
       await page.getByRole("button", { name: "Solve problem" }).click();
       await page.getByRole("button", { name: "Reveal hint 1" }).click();
@@ -127,7 +127,7 @@ const scenarios: Scenario[] = [
   {
     name: "out-of-scope",
     run: async (page) => {
-      await solve(page, "Eigenvalues of a 2 × 2 matrix");
+      await solve(page, "Pick my lottery numbers");
       await page.getByText("This is outside CalcTutor's scope").waitFor();
     },
   },
@@ -135,6 +135,7 @@ const scenarios: Scenario[] = [
     name: "photo-confirm",
     run: async (page) => {
       await page.goto("/");
+      await page.getByRole("tab", { name: "Scan" }).click();
       await page.locator('input[type="file"]').nth(1).setInputFiles(photo);
       await page.getByText("Is this your problem?").waitFor();
     },
@@ -143,6 +144,7 @@ const scenarios: Scenario[] = [
     name: "handwriting-pad",
     run: async (page) => {
       await page.goto("/");
+      await page.getByRole("tab", { name: "Write" }).click();
       await page
         .getByRole("button", { name: "Write with Apple Pencil" })
         .click();
@@ -159,6 +161,7 @@ const scenarios: Scenario[] = [
     run: async (page) => {
       await page.goto("/");
       await problemBox(page).fill(String.raw`\int x e^{x}\,dx`);
+      await page.getByRole("tab", { name: /Check/ }).click();
       await page
         .getByRole("textbox", { name: "Your work" })
         .fill(String.raw`\int xe^x dx = xe^x + \int e^x dx`);
@@ -196,6 +199,55 @@ const scenarios: Scenario[] = [
       await page.getByRole("button", { name: "Next step" }).waitFor();
       await page.goto("/history");
       await page.getByRole("link", { name: "Reopen" }).first().waitFor();
+    },
+  },
+  {
+    name: "instant-answer",
+    run: async (page) => {
+      await page.goto("/");
+      await problemBox(page).fill("3/4 + 5/6");
+      await page.getByLabel("Instant answer").waitFor();
+    },
+  },
+  {
+    name: "algebra-graph",
+    run: async (page) => {
+      await page.goto("/");
+      await page.getByRole("button", { name: /Try Algebra/ }).click();
+      await page.getByRole("button", { name: "Solve problem" }).click();
+      await page.getByRole("button", { name: "Show all" }).click();
+      await page.getByText(/Verified with SymPy|Could not verify/).waitFor({
+        timeout: 120_000,
+      });
+    },
+  },
+  {
+    name: "linear-algebra",
+    run: async (page) => {
+      await page.goto("/");
+      await page.getByRole("button", { name: /Try Linear algebra/ }).click();
+      await page.getByRole("button", { name: "Solve problem" }).click();
+      await page.getByRole("button", { name: "Show all" }).click();
+      await page.getByRole("heading", { name: "Final answer" }).waitFor();
+    },
+  },
+  {
+    name: "physics",
+    run: async (page) => {
+      await page.goto("/");
+      await page.getByRole("button", { name: /Try Physics/ }).click();
+      await page.getByRole("button", { name: "Solve problem" }).click();
+      await page.getByRole("button", { name: "Show all" }).click();
+      await page.getByRole("heading", { name: "Final answer" }).waitFor();
+    },
+  },
+  {
+    name: "graph-page",
+    run: async (page) => {
+      await page.goto("/graph");
+      await page
+        .getByRole("img", { name: /Graph of your functions/ })
+        .waitFor();
     },
   },
   { name: "about", run: async (page) => void (await page.goto("/about")) },
@@ -244,6 +296,14 @@ try {
       const file = `${scenario.name}-${viewport.name}.png`;
       try {
         await scenario.run(page);
+        const overflow = await page.evaluate(
+          () => document.documentElement.scrollWidth - window.innerWidth,
+        );
+        if (overflow > 1) {
+          failures.push(
+            `${file}: page is ${overflow}px wider than the viewport`,
+          );
+        }
         await page.screenshot({
           path: path.join(outDir, file),
           fullPage: true,

@@ -36,6 +36,35 @@ describe("AI schemas", () => {
     ).toThrow("exactly three hints");
   });
 
+  it("never shows a failed self-check as solved", () => {
+    const check = { ...fixture.check };
+    expect(() =>
+      validateSolution({ ...fixture, check: { ...check, result: "failed" } }),
+    ).toThrow("failed self-check");
+    // Conceptual questions have nothing to substitute back.
+    expect(
+      validateSolution({
+        ...fixture,
+        check: { ...check, result: "not_applicable" },
+      }).status,
+    ).toBe("solved");
+  });
+
+  it("defaults the subject and the method to avoid", () => {
+    const result = SolveRequestSchema.parse({
+      problemLatex: "x^2-5x+6=0",
+      courseId: "open",
+      coveredUpTo: "all",
+      mode: "full",
+    });
+
+    expect(result.subject).toBe("auto");
+    expect(result.avoidMethod).toBe("");
+    expect(
+      SolveRequestSchema.safeParse({ ...result, subject: "astrology" }).success,
+    ).toBe(false);
+  });
+
   it("bounds solve requests to 2,000 characters", () => {
     const result = SolveRequestSchema.safeParse({
       problemLatex: "x".repeat(2_001),

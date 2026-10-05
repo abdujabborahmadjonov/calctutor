@@ -179,3 +179,44 @@
   `inert` and cannot scroll while you write, and Escape closes it.
 - iPad text fields already support Scribble (handwriting into text), so the
   problem box accepts Apple Pencil input natively as well.
+
+## 2026-10-05 — Every subject, Photomath-style tools, redesign
+
+- Scope widened from Calculus I and II to all math, science and other
+  homework or general-knowledge questions. `out_of_scope` is now only for
+  requests that are not questions or ask for something harmful.
+- A pseudo-course `open` (covered up to `all`) is the default: no method
+  restrictions. The Alberta courses still work as before for calculus. The
+  course block for `open` tells the model to use the clearest standard method
+  for the problem's level.
+- The solve request gained `subject` (default `auto`, steers notation and
+  method, never refuses another subject) and `avoidMethod` (for "Solve
+  another way": the method of the solution already shown).
+- Outside a course, `topic_id` is `<subject>.<topic>` (for example
+  `algebra.quadratic-equations`), which labels the solution and feeds
+  practice problems. Practice from a solved problem accepts such ids; the
+  topic browser still requires a course topic.
+- A solved response may now report `check.result: "not_applicable"` (for a
+  concept or definition question with nothing to check). A failed self-check
+  is still never shown as solved.
+- SymPy checks equations in one variable by substituting each listed root
+  back in (`roots` plan, `x = \pm 2` and "or" lists supported). It confirms
+  the listed roots; it does not prove that none is missing. Inequalities,
+  constrained domains and systems are left to the model's own check.
+- Instant answers and graphs use a small evaluator in TypeScript
+  (`lib/math/evaluate.ts`), not SymPy: it is synchronous, needs no 30 MB
+  Pyodide download, and refuses anything it does not understand. It reads
+  plain calculator input and the output of `latexToSympy`, with implicit
+  multiplication, and shows a fraction only for rational input.
+- Graphs are SVG with pan, pinch and wheel zoom, trace, roots and the
+  y-intercept. A solution is graphed only when it has a clear picture: both
+  sides of an equation, a function and its derivative, an integrand and its
+  antiderivative (with the area shaded for a definite integral), or a
+  function answer. Limits, matrices and word problems are not graphed.
+- The math keyboard keeps focus in the problem box (keys never take focus)
+  and sets `inputMode="none"` while it is open, so phones and iPads do not
+  also raise the system keyboard; "Math keys" turns it off for typing words.
+- The theme moved from grayscale to an indigo-to-violet brand gradient, with
+  the Geist font actually applied (`--font-sans` previously pointed at
+  itself).
+- `npm run screenshots` now fails if a page is wider than the viewport.

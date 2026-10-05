@@ -1,7 +1,7 @@
 import {
   type Solution,
   SolutionSchema,
-  type SolveRequest,
+  type SolveRequestInput,
 } from "@/lib/ai/schemas";
 import { SolveStreamEventSchema } from "@/lib/ai/stream-events";
 
@@ -94,7 +94,7 @@ async function readStreamedSolution(
 // non-streaming (JSON) response. onText receives the solution JSON text
 // accumulated so far while streaming.
 export async function requestSolve(
-  body: SolveRequest,
+  body: SolveRequestInput,
   onText: (text: string) => void = () => {},
 ): Promise<SolveOutcome> {
   const response = await fetch("/api/solve", {

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { SUBJECT_IDS } from "@/lib/subjects";
+
 export const StepSchema = z.object({
   title: z.string(),
   rule: z.string(),
@@ -39,11 +41,14 @@ export const SolveRequestSchema = z.object({
   problemLatex: z
     .string()
     .trim()
-    .min(1, "Enter a calculus problem")
+    .min(1, "Enter a problem or question")
     .max(2_000, "Problem must be 2,000 characters or fewer"),
   courseId: z.string(),
   coveredUpTo: z.string(),
   mode: z.enum(["full", "check"]),
+  subject: z.enum(SUBJECT_IDS).default("auto"),
+  // "Solve another way": the method of the solution already shown.
+  avoidMethod: z.string().trim().max(300).default(""),
 });
 
 export const TranscriptionSchema = z.object({
@@ -82,7 +87,7 @@ export const ExplainStepRequestSchema = z.object({
   problemLatex: z
     .string()
     .trim()
-    .min(1, "Enter a calculus problem")
+    .min(1, "Enter a problem or question")
     .max(2_000, "Problem must be 2,000 characters or fewer"),
   solution: SolutionSchema,
   stepIndex: z.number().int().nonnegative(),
@@ -145,6 +150,7 @@ export const ProblemSchema = z.object({
   courseId: z.string(),
   coveredUpTo: z.string(),
   topicId: z.string().optional(),
+  subject: z.enum(SUBJECT_IDS).optional(),
   createdAt: z.string(),
 });
 
@@ -165,6 +171,7 @@ export const SolutionRecordSchema = z.object({
 export type Step = z.infer<typeof StepSchema>;
 export type Solution = z.infer<typeof SolutionSchema>;
 export type SolveRequest = z.infer<typeof SolveRequestSchema>;
+export type SolveRequestInput = z.input<typeof SolveRequestSchema>;
 export type Transcription = z.infer<typeof TranscriptionSchema>;
 export type TranscribedProblem = Transcription["problems"][number];
 export type TranscribeRequest = z.infer<typeof TranscribeRequestSchema>;
@@ -185,8 +192,10 @@ export function validateSolution(value: unknown): Solution {
     throw new Error("A solved response must contain exactly three hints");
   }
 
-  if (solution.status === "solved" && solution.check.result !== "passed") {
-    throw new Error("A solved response must include a passing self-check");
+  // "not_applicable" is for conceptual questions with nothing to substitute
+  // back; a failed check is never shown as solved.
+  if (solution.status === "solved" && solution.check.result === "failed") {
+    throw new Error("A solved response must not include a failed self-check");
   }
 
   return solution;

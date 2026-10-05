@@ -31,7 +31,9 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!topicById.has(parsed.data.topicId)) {
+  // Topic-browser practice needs a course topic; practice from a solved
+  // problem may use any subject topic the solver named.
+  if (!topicById.has(parsed.data.topicId) && !parsed.data.problemLatex) {
     return errorResponse(
       400,
       "invalid_topic",

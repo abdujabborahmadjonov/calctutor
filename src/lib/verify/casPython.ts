@@ -59,6 +59,15 @@ def same_number(a, b):
 def run(plan):
     x = Symbol(plan["variable"])
     kind = plan["kind"]
+    if kind == "roots":
+        expr = parse(plan["expr"], plan["variable"])
+        if expr.free_symbols - {x}:
+            return False
+        for text in plan["values"]:
+            residual = expr.subs(x, parse(text, plan["variable"]))
+            if not (simplify(residual) == 0 or same_number(residual, 0)):
+                return False
+        return len(plan["values"]) > 0
     answer = parse(plan["answer"], plan["variable"])
     if kind == "equivalent":
         return is_zero(parse(plan["expected"], plan["variable"]) - answer, x)

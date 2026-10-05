@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 
 import type { Problem, Solution, SolutionRecord } from "@/lib/ai/schemas";
+import type { SubjectId } from "@/lib/subjects";
 import {
   type PartialSolution,
   readPartialSolution,
@@ -15,6 +16,8 @@ type SolveInput = {
   source: Problem["source"];
   courseId: string;
   coveredUpTo: string;
+  subject: SubjectId;
+  avoidMethod?: string;
 };
 
 export function useSolver() {
@@ -32,6 +35,8 @@ export function useSolver() {
     source,
     courseId,
     coveredUpTo,
+    subject,
+    avoidMethod = "",
   }: SolveInput) => {
     if (!latex.trim() || solving.current) return;
 
@@ -44,7 +49,14 @@ export function useSolver() {
 
     try {
       const outcome = await requestSolve(
-        { problemLatex: latex, courseId, coveredUpTo, mode: "full" },
+        {
+          problemLatex: latex,
+          courseId,
+          coveredUpTo,
+          mode: "full",
+          subject,
+          avoidMethod,
+        },
         (text) => setPartial(readPartialSolution(text)),
       );
       const now = new Date().toISOString();
@@ -72,6 +84,7 @@ export function useSolver() {
               courseId,
               coveredUpTo,
               topicId: outcome.solution.problem.topic_id,
+              subject,
               createdAt: now,
             },
             record,

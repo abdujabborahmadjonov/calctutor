@@ -11,7 +11,6 @@ import { HandwritingPad } from "./HandwritingPad";
 import { ImageCapture } from "./ImageCapture";
 import { TranscriptionConfirm } from "./TranscriptionConfirm";
 import { Button } from "./ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { formatElapsed, useElapsedSeconds } from "./useElapsedSeconds";
 
 type PhotoState =
@@ -25,6 +24,8 @@ type PhotoState =
     };
 
 type PhotoInputProps = {
+  // Which entry the idle state offers: a photo, or the handwriting pad.
+  mode: "scan" | "write";
   onSolve: (latex: string) => void;
   onCheckWork: (latex: string, studentWork: string) => void;
   disabled: boolean;
@@ -43,6 +44,7 @@ function ReadingState() {
 }
 
 export function PhotoInput({
+  mode,
   onSolve,
   onCheckWork,
   disabled,
@@ -100,80 +102,83 @@ export function PhotoInput({
   }, []);
 
   return (
-    <Card className="shadow-sm">
-      <CardHeader>
-        <CardTitle>Or use a photo or your pen</CardTitle>
-        <p className="text-sm text-muted-foreground">
-          Photograph the problem, or write it by hand with Apple Pencil. You
-          confirm what was read before anything is solved.
+    <div className="space-y-4">
+      {error && (
+        <p className="flex gap-2 text-sm text-destructive" role="alert">
+          <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+          {error}
         </p>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {error && (
-          <p className="flex gap-2 text-sm text-destructive" role="alert">
-            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-            {error}
+      )}
+
+      {previewUrl && (
+        // A local blob URL, so Next's image optimizer is bypassed.
+        <Image
+          src={previewUrl}
+          alt="Your problem photo"
+          width={2000}
+          height={2000}
+          unoptimized
+          className="max-h-56 w-full rounded-xl border object-contain"
+        />
+      )}
+
+      {state.stage === "idle" && mode === "write" && (
+        <div className="rounded-2xl border-2 border-dashed p-6 text-center">
+          <div className="mx-auto mb-3 grid size-14 place-items-center rounded-2xl bg-brand text-white shadow-lg shadow-primary/25">
+            <PenLine className="size-7" />
+          </div>
+          <p className="font-semibold">Write it by hand</p>
+          <p className="mx-auto mb-4 max-w-sm text-sm text-muted-foreground">
+            A full-screen page for Apple Pencil, a finger, or a mouse. Write the
+            problem, and your working under it to have it checked.
           </p>
-        )}
-
-        {previewUrl && (
-          // A local blob URL, so Next's image optimizer is bypassed.
-          <Image
-            src={previewUrl}
-            alt="Your problem photo"
-            width={2000}
-            height={2000}
-            unoptimized
-            className="max-h-56 w-full rounded-lg border object-contain"
-          />
-        )}
-
-        {state.stage === "idle" && (
           <Button
             type="button"
-            variant="outline"
             size="lg"
-            className="h-12 w-full text-base"
+            className="h-12 px-6 text-base"
             disabled={disabled}
             onClick={() => setWriting(true)}
           >
             <PenLine className="size-5" />
             Write with Apple Pencil
           </Button>
-        )}
+        </div>
+      )}
 
-        {writing && (
-          <HandwritingPad
-            onCancel={() => setWriting(false)}
-            onDone={(image) => {
-              setWriting(false);
-              void readPhoto(image);
-            }}
-          />
-        )}
+      {writing && (
+        <HandwritingPad
+          onCancel={() => setWriting(false)}
+          onDone={(image) => {
+            setWriting(false);
+            void readPhoto(image);
+          }}
+        />
+      )}
 
-        {state.stage === "idle" && (
+      {/* Stays mounted on the write tab too, so pasting an image works. */}
+      {state.stage === "idle" && (
+        <div hidden={mode !== "scan"}>
           <ImageCapture onFile={readPhoto} disabled={disabled} />
-        )}
+        </div>
+      )}
 
-        {state.stage === "reading" && <ReadingState />}
+      {state.stage === "reading" && <ReadingState />}
 
-        {state.stage === "confirm" && (
-          <TranscriptionConfirm
-            transcription={state.transcription}
-            isMock={state.isMock}
-            onRetake={() => setState({ stage: "idle" })}
-            onSolve={(latex) => {
-              setState({ stage: "idle" });
-              onSolve(latex);
-            }}
-            onCheckWork={(latex, studentWork) => {
-              setState({ stage: "idle" });
-              onCheckWork(latex, studentWork);
-            }}
-          />
-        )}
-      </CardContent>
-    </Card>
+      {state.stage === "confirm" && (
+        <TranscriptionConfirm
+          transcription={state.transcription}
+          isMock={state.isMock}
+          onRetake={() => setState({ stage: "idle" })}
+          onSolve={(latex) => {
+            setState({ stage: "idle" });
+            onSolve(latex);
+          }}
+          onCheckWork={(latex, studentWork) => {
+            setState({ stage: "idle" });
+            onCheckWork(latex, studentWork);
+          }}
+        />
+      )}
+    </div>
   );
 }

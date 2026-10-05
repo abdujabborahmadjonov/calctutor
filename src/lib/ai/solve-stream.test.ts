@@ -7,6 +7,8 @@ const request = {
   courseId: "ualberta-math-146",
   coveredUpTo: "parametric-polar",
   mode: "full" as const,
+  subject: "auto" as const,
+  avoidMethod: "",
 };
 
 function fakeStream(usage: { input_tokens: number; output_tokens: number }) {

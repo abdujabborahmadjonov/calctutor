@@ -6,6 +6,7 @@ import { Check, Copy, FileDown, Printer, ShieldCheck } from "lucide-react";
 import type { Solution } from "@/lib/ai/schemas";
 import { markdownFileName, solutionToMarkdown } from "@/lib/export/markdown";
 
+import { Markdown } from "./Markdown";
 import { Math } from "./Math";
 import { PracticeSimilar, type PracticeContext } from "./PracticeSimilar";
 import { Button } from "./ui/button";
@@ -59,16 +60,21 @@ export function FinalAnswerCard({ solution, practice }: FinalAnswerCardProps) {
         <div className="overflow-x-auto rounded-lg bg-muted/40 p-4">
           <Math latex={solution.final_answer.latex} display />
         </div>
-        <p>{solution.final_answer.plain}</p>
+        <Markdown>{solution.final_answer.plain}</Markdown>
         {solution.final_answer.domain_notes && (
-          <p className="text-sm text-muted-foreground">
+          <Markdown className="text-sm text-muted-foreground">
             {solution.final_answer.domain_notes}
-          </p>
+          </Markdown>
         )}
         <div className="flex items-start gap-2 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-950 dark:bg-emerald-950/30 dark:text-emerald-100">
           <ShieldCheck className="mt-0.5 size-4 shrink-0" />
           <span>
-            Self-checked by {solution.check.method}. {solution.check.detail}
+            {solution.check.result === "not_applicable" ? (
+              <>Nothing to substitute back for this question. </>
+            ) : (
+              <>Self-checked by {solution.check.method}. </>
+            )}
+            <Markdown inline>{solution.check.detail}</Markdown>
           </span>
         </div>
         <VerificationBadge solution={solution} />

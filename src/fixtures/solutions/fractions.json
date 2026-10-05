@@ -1,0 +1,59 @@
+{
+  "status": "solved",
+  "clarification_question": "",
+  "problem": {
+    "restated_latex": "\\frac{3}{4}+\\frac{5}{6}",
+    "topic_id": "arithmetic.fractions",
+    "problem_type": "Adding fractions"
+  },
+  "strategy": {
+    "method": "Common denominator",
+    "why_this_method": "Fractions can only be added when their denominators match. The least common multiple of 4 and 6 is 12, the smallest denominator that works.",
+    "alternatives": "Any common denominator works, for example 24, but then the result must be reduced at the end."
+  },
+  "steps": [
+    {
+      "title": "Find the least common denominator",
+      "rule": "Least common multiple",
+      "latex": "\\operatorname{lcm}(4,6)=12",
+      "explanation": "List multiples of the larger denominator, 6, 12, 18, and stop at the first one divisible by 4.",
+      "common_mistake": ""
+    },
+    {
+      "title": "Rewrite each fraction over 12",
+      "rule": "Equivalent fractions",
+      "latex": "\\frac{3}{4}=\\frac{9}{12},\\qquad \\frac{5}{6}=\\frac{10}{12}",
+      "explanation": "Multiply the top and bottom of each fraction by the same number, which does not change its value.",
+      "common_mistake": "Multiplying only the denominator, which changes the fraction's value."
+    },
+    {
+      "title": "Add the numerators",
+      "rule": "Adding like fractions",
+      "latex": "\\frac{9}{12}+\\frac{10}{12}=\\frac{19}{12}",
+      "explanation": "With equal denominators, add the numerators and keep the denominator.",
+      "common_mistake": "Adding the denominators as well, giving $\\frac{19}{24}$."
+    },
+    {
+      "title": "Simplify",
+      "rule": "Simplest form",
+      "latex": "\\frac{19}{12}=1\\tfrac{7}{12}",
+      "explanation": "19 is prime and does not divide 12, so the fraction is already in lowest terms. As a mixed number it is $1\\tfrac{7}{12}$.",
+      "common_mistake": ""
+    }
+  ],
+  "final_answer": {
+    "latex": "\\frac{19}{12}",
+    "plain": "nineteen twelfths, or 1 and 7/12",
+    "domain_notes": ""
+  },
+  "check": {
+    "method": "Decimal estimate",
+    "result": "passed",
+    "detail": "$0.75+0.8\\overline{3}=1.58\\overline{3}$ and $19/12=1.58\\overline{3}$."
+  },
+  "hints": [
+    "What must be true of two fractions before you can add them?",
+    "Rewrite both over the least common denominator, 12.",
+    "$\\frac{3}{4}=\\frac{9}{12}$ and $\\frac{5}{6}=\\frac{10}{12}$."
+  ]
+}

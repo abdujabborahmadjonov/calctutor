@@ -70,6 +70,37 @@ describe("POST /api/solve", () => {
     });
   });
 
+  it("solves problems outside calculus in the open course", async () => {
+    const route = await loadRoute(false);
+    const response = await post(route, {
+      ...body,
+      problemLatex: "Eigenvalues of [[2, 1], [1, 2]]",
+      courseId: "open",
+      coveredUpTo: "all",
+      subject: "linear-algebra",
+    });
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      status: "solved",
+      problem: { topic_id: "linear-algebra.eigenvalues" },
+    });
+  });
+
+  it("rejects a course topic on the open course", async () => {
+    const route = await loadRoute(false);
+    const response = await post(route, {
+      ...body,
+      courseId: "open",
+      coveredUpTo: "limits",
+    });
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      error: { code: "invalid_course" },
+    });
+  });
+
   it("returns a typed validation error", async () => {
     const route = await loadRoute(true);
     const response = await post(route, { ...body, problemLatex: "" });

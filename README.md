@@ -1,15 +1,24 @@
 # CalcTutor
 
-CalcTutor is a mobile-first calculus tutor for Alberta students. It solves
-Calculus I and II problems with named rules, plain-language explanations,
-hints, and answer checks:
+CalcTutor is a step-by-step tutor for any math problem (arithmetic, algebra,
+geometry, trigonometry, precalculus, Calculus I to III, linear algebra,
+differential equations, statistics, discrete math) and for physics,
+chemistry and other homework questions:
 
-- Type a problem (plain English or LaTeX), photograph it, or write it with
-  Apple Pencil on the handwriting pad, confirm what was read, and get a course-aware solution that streams in step by step.
+- Type a problem (plain English or LaTeX) with the on-screen math keyboard,
+  scan a photo, or write it with Apple Pencil on the handwriting pad, confirm
+  what was read, and get a solution that streams in step by step.
+- A subject picker (or "Auto"), instant answers for plain arithmetic, an
+  interactive graph of each solution, "Solve another way", and a graphing
+  calculator at `/graph`.
 - Strategy card, hint ladder, Learn mode, "Explain this step more", and a
-  final answer checked by SymPy in the browser.
+  final answer checked by SymPy in the browser (integrals, derivatives,
+  limits, and the roots of one-variable equations).
 - Check my work, graded practice problems, Markdown and PDF export, a topic
   browser, and local history.
+- Optional Alberta course mode for calculus: pick a course and how far your
+  class has got, and only the methods covered so far are used. The default,
+  "Any level · no restrictions", solves everything.
 
 The product and build contract is [`docs/SPEC.md`](docs/SPEC.md). The latest
 build run and its results are in [`docs/REPORT.md`](docs/REPORT.md) and

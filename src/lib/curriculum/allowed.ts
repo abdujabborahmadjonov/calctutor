@@ -17,7 +17,17 @@ export function getCourse(courseId: string) {
   return course;
 }
 
+// The open "course": any subject at any level, no method restrictions. It is
+// the default; the Alberta courses stay available for course-aware calculus.
+export const OPEN_COURSE_ID = "open";
+export const OPEN_COVERED_UP_TO = "all";
+
+export function isOpenCourse(courseId: string) {
+  return courseId === OPEN_COURSE_ID;
+}
+
 export function getDefaultCoveredUpTo(courseId = DEFAULT_COURSE_ID) {
+  if (isOpenCourse(courseId)) return OPEN_COVERED_UP_TO;
   const course = getCourse(courseId);
   const lastTopic = course.topicOrder.at(-1);
 
@@ -29,6 +39,14 @@ export function getDefaultCoveredUpTo(courseId = DEFAULT_COURSE_ID) {
 }
 
 export function getAllowedCurriculum(courseId: string, coveredUpTo: string) {
+  if (isOpenCourse(courseId)) {
+    if (coveredUpTo !== OPEN_COVERED_UP_TO) {
+      throw new CurriculumError(
+        `The open course takes covered_up_to "${OPEN_COVERED_UP_TO}"`,
+      );
+    }
+    return undefined;
+  }
   const course = getCourse(courseId);
   const coveredIndex = course.topicOrder.indexOf(coveredUpTo);
 
@@ -58,8 +76,20 @@ export function buildCourseBlock(
   courseId: string,
   coveredUpTo: string,
 ): string {
+  const curriculum = getAllowedCurriculum(courseId, coveredUpTo);
+  if (!curriculum) {
+    return [
+      "<course>",
+      "id: open",
+      "name: No course restrictions",
+      "level: any, from arithmetic to university",
+      "allowed_methods: any standard method; choose the clearest one a student at this problem's level would learn",
+      "notation: standard; radians unless the problem uses degrees; \\ln for the natural log",
+      "</course>",
+    ].join("\n");
+  }
   const { course, allowedTopicIds, allowedMethods, notYetCoveredIds } =
-    getAllowedCurriculum(courseId, coveredUpTo);
+    curriculum;
   const notYetCovered = notYetCoveredIds
     .map((id) => topicById.get(id)?.name ?? id)
     .join(", ");

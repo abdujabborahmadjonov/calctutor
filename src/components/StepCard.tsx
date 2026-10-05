@@ -57,7 +57,8 @@ export function StepCard({ step, index, explain }: StepCardProps) {
         <Markdown className="text-foreground/85">{step.explanation}</Markdown>
         {step.common_mistake && (
           <aside className="rounded-lg border border-amber-300/60 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-100">
-            <strong>Common mistake:</strong> {step.common_mistake}
+            <strong>Common mistake:</strong>{" "}
+            <Markdown inline>{step.common_mistake}</Markdown>
           </aside>
         )}
         {explain && <ExplainMore {...explain} stepIndex={index} />}

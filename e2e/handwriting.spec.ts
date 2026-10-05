@@ -64,6 +64,7 @@ test("writing with Apple Pencil goes through transcription to check my work", as
   });
 
   await page.goto("/");
+  await page.getByRole("tab", { name: "Write" }).click();
   await page.getByRole("button", { name: "Write with Apple Pencil" }).click();
   const pad = page.getByRole("dialog", { name: "Handwriting pad" });
   await expect(pad).toBeVisible();

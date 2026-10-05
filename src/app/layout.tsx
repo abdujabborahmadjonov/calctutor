@@ -19,7 +19,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "CalcTutor",
-  description: "Step-by-step Calculus I and II help for students in Alberta.",
+  description:
+    "Step-by-step solutions for any math problem, from fractions to differential equations, plus physics, chemistry and more.",
 };
 
 export default function RootLayout({
@@ -41,9 +42,9 @@ export default function RootLayout({
         <MockBanner />
         <AppHeader />
         {children}
-        <footer className="mt-auto border-t px-4 py-5 text-center text-xs text-muted-foreground">
-          Explanations are AI-generated; every final answer is self-checked, and
-          CAS-verified where marked.
+        <footer className="mt-auto border-t px-4 py-6 text-center text-xs text-muted-foreground print:hidden">
+          Explanations are AI-generated. Every final answer is self-checked, and
+          verified with SymPy where marked.
         </footer>
       </body>
     </html>

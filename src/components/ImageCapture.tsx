@@ -68,7 +68,7 @@ export function ImageCapture({ onFile, disabled = false }: ImageCaptureProps) {
       <Button
         type="button"
         size="lg"
-        className="h-14 w-full text-base sm:hidden"
+        className="h-14 w-full bg-brand text-base text-white sm:hidden"
         disabled={disabled}
         onClick={() => cameraInput.current?.click()}
       >
@@ -78,7 +78,7 @@ export function ImageCapture({ onFile, disabled = false }: ImageCaptureProps) {
 
       <div
         className={cn(
-          "hidden rounded-xl border-2 border-dashed p-6 text-center transition-colors sm:block",
+          "hidden rounded-2xl border-2 border-dashed p-8 text-center transition-colors sm:block",
           dragging && "border-primary bg-primary/5",
           disabled && "opacity-60",
         )}
@@ -94,8 +94,10 @@ export function ImageCapture({ onFile, disabled = false }: ImageCaptureProps) {
           if (image && !disabled) onFile(image);
         }}
       >
-        <ImageUp className="mx-auto mb-2 size-6 text-muted-foreground" />
-        <p className="text-sm font-medium">Drop a photo of the problem here</p>
+        <div className="mx-auto mb-3 grid size-14 place-items-center rounded-2xl bg-brand text-white shadow-lg shadow-primary/25">
+          <ImageUp className="size-7" />
+        </div>
+        <p className="font-semibold">Drop a photo of the problem here</p>
         <p className="mb-3 text-xs text-muted-foreground">
           or paste one with Cmd/Ctrl+V
         </p>

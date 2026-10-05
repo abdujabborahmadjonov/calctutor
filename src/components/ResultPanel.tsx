@@ -7,6 +7,7 @@ import type { Solution } from "@/lib/ai/schemas";
 import type { PartialSolution } from "@/lib/client/partialSolution";
 
 import { CheckWorkResult } from "./CheckWorkResult";
+import { FeatureShowcase } from "./FeatureShowcase";
 import { SolutionView } from "./SolutionView";
 import { SolvingState } from "./SolvingState";
 import { StreamingSolution } from "./StreamingSolution";
@@ -32,6 +33,7 @@ type ResultPanelProps = {
   checkWork: { checked?: CheckWorkState; isChecking: boolean; error: string };
   onRetry: () => void;
   onShowSolution: (problemLatex: string) => void;
+  onSolveAnotherWay: (method: string) => void;
 };
 
 function ErrorCard({
@@ -65,6 +67,7 @@ export const ResultPanel = forwardRef<HTMLElement, ResultPanelProps>(
       checkWork,
       onRetry,
       onShowSolution,
+      onSolveAnotherWay,
     },
     ref,
   ) {
@@ -116,16 +119,11 @@ export const ResultPanel = forwardRef<HTMLElement, ResultPanelProps>(
             learnMode={learnMode}
             courseId={courseId}
             coveredUpTo={coveredUpTo}
+            onSolveAnotherWay={onSolveAnotherWay}
           />
         )}
 
-        {!hasResult && !busy && !error && (
-          <Card className="border-dashed">
-            <CardContent className="py-14 text-center text-sm text-muted-foreground">
-              Your strategy and step-by-step solution will appear here.
-            </CardContent>
-          </Card>
-        )}
+        {!hasResult && !busy && !error && <FeatureShowcase />}
       </section>
     );
   },

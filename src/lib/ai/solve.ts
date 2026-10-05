@@ -25,6 +25,13 @@ export type SolveResult = {
   source: "mock" | "anthropic";
 };
 
+export function buildSolveUserMessage(course: string, request: SolveRequest) {
+  const avoid = request.avoidMethod
+    ? `\n<avoid_method>${request.avoidMethod}</avoid_method>`
+    : "";
+  return `${course}\n<subject>${request.subject}</subject>\n<mode>${request.mode}</mode>${avoid}\n<problem>\n${request.problemLatex}\n</problem>`;
+}
+
 export function buildSolveParams(request: SolveRequest, maxTokens: number) {
   const course = buildCourseBlock(request.courseId, request.coveredUpTo);
 
@@ -41,7 +48,7 @@ export function buildSolveParams(request: SolveRequest, maxTokens: number) {
     messages: [
       {
         role: "user" as const,
-        content: `${course}\n<mode>${request.mode}</mode>\n<problem>\n${request.problemLatex}\n</problem>`,
+        content: buildSolveUserMessage(course, request),
       },
     ],
     output_config: {

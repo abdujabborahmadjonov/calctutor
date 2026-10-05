@@ -1,0 +1,66 @@
+{
+  "status": "solved",
+  "clarification_question": "",
+  "problem": {
+    "restated_latex": "x^{2}-5x+6=0",
+    "topic_id": "algebra.quadratic-equations",
+    "problem_type": "Quadratic equation"
+  },
+  "strategy": {
+    "method": "Factoring",
+    "why_this_method": "The constant 6 has a factor pair, $-2$ and $-3$, that adds to the middle coefficient $-5$, so the quadratic factors over the integers and the zero product property finishes it in one line.",
+    "alternatives": "The quadratic formula always works and gives the same roots; completing the square also works but takes more algebra here."
+  },
+  "steps": [
+    {
+      "title": "Identify the form and choose a method",
+      "rule": "Standard form of a quadratic",
+      "latex": "x^{2}-5x+6=0 \\quad (a=1,\\; b=-5,\\; c=6)",
+      "explanation": "The equation is already in standard form $ax^2+bx+c=0$ with $a=1$. When $a=1$, look for two numbers that multiply to $c$ and add to $b$; if they are integers, factoring is the fastest route.",
+      "common_mistake": ""
+    },
+    {
+      "title": "Find two numbers that multiply to 6 and add to -5",
+      "rule": "Factor pairs",
+      "latex": "(-2)(-3)=6,\\qquad (-2)+(-3)=-5",
+      "explanation": "Both numbers must be negative: their product is positive and their sum is negative. Listing the factor pairs of 6 (1 and 6, 2 and 3) finds them quickly.",
+      "common_mistake": "Choosing $+2$ and $+3$, which multiply to 6 but add to $+5$, not $-5$."
+    },
+    {
+      "title": "Factor the quadratic",
+      "rule": "Factoring a trinomial",
+      "latex": "x^{2}-5x+6=(x-2)(x-3)=0",
+      "explanation": "Each number from the last step becomes the constant in one factor. Expanding $(x-2)(x-3)$ gives back $x^2-5x+6$, which is a quick check.",
+      "common_mistake": ""
+    },
+    {
+      "title": "Set each factor equal to zero",
+      "rule": "Zero product property",
+      "latex": "x-2=0 \\quad\\text{or}\\quad x-3=0",
+      "explanation": "A product is zero only when at least one factor is zero, so the single equation splits into two simple ones.",
+      "common_mistake": "Applying this rule when the right side is not zero, for example $(x-2)(x-3)=4$."
+    },
+    {
+      "title": "Solve each equation",
+      "rule": "Solving linear equations",
+      "latex": "x=2 \\quad\\text{or}\\quad x=3",
+      "explanation": "Add the constant to both sides of each equation. A quadratic has at most two roots, and we found two, so this is the complete solution set.",
+      "common_mistake": ""
+    }
+  ],
+  "final_answer": {
+    "latex": "x = 2, \\; x = 3",
+    "plain": "x equals 2 or x equals 3",
+    "domain_notes": ""
+  },
+  "check": {
+    "method": "Substitution",
+    "result": "passed",
+    "detail": "Substituting gives $2^2-5(2)+6=0$ and $3^2-5(3)+6=0$."
+  },
+  "hints": [
+    "Look at the constant term and the middle coefficient. Is there a pair of numbers that links them?",
+    "Factor: find two numbers that multiply to 6 and add to -5.",
+    "The quadratic factors as $(x-2)(x-3)=0$."
+  ]
+}

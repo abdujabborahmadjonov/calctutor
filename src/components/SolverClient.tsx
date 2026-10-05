@@ -1,27 +1,31 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { BookOpen } from "lucide-react";
 
 import type { Problem } from "@/lib/ai/schemas";
-import { courseById, DEFAULT_COURSE_ID } from "@/lib/curriculum/alberta";
-import { getDefaultCoveredUpTo } from "@/lib/curriculum/allowed";
+import { courseById } from "@/lib/curriculum/alberta";
+import {
+  getDefaultCoveredUpTo,
+  isOpenCourse,
+  OPEN_COURSE_ID,
+} from "@/lib/curriculum/allowed";
 import { getSetting, setSetting } from "@/lib/storage/history";
+import { isSubjectId, type SubjectId } from "@/lib/subjects";
 
+import { Composer } from "./Composer";
 import { CourseSelector } from "./CourseSelector";
-import { CheckWorkInput } from "./CheckWorkInput";
-import { PhotoInput } from "./PhotoInput";
-import { ProblemInput } from "./ProblemInput";
+import { ExampleGallery } from "./ExampleGallery";
 import { ResultPanel } from "./ResultPanel";
-import { Card, CardContent } from "./ui/card";
-import { Switch } from "./ui/switch";
 import { useCheckWork } from "./useCheckWork";
 import { useSolver } from "./useSolver";
 
 export function SolverClient() {
   const [problem, setProblem] = useState("");
-  const [courseId, setCourseId] = useState(DEFAULT_COURSE_ID);
-  const [coveredUpTo, setCoveredUpTo] = useState(() => getDefaultCoveredUpTo());
+  const [courseId, setCourseId] = useState(OPEN_COURSE_ID);
+  const [coveredUpTo, setCoveredUpTo] = useState(() =>
+    getDefaultCoveredUpTo(OPEN_COURSE_ID),
+  );
+  const [subject, setSubject] = useState<SubjectId>("auto");
   const [learnMode, setLearnMode] = useState(false);
   const [lastSource, setLastSource] = useState<Problem["source"]>("text");
   const [view, setView] = useState<"solve" | "check">("solve");
@@ -39,7 +43,8 @@ export function SolverClient() {
       getSetting("courseId"),
       getSetting("coveredUpTo"),
       getSetting("learnMode"),
-    ]).then(([storedCourse, storedCovered, storedLearnMode]) => {
+      getSetting("subject"),
+    ]).then(([storedCourse, storedCovered, storedLearnMode, storedSubject]) => {
       const reopenedProblem = new URLSearchParams(window.location.search).get(
         "problem",
       );
@@ -47,10 +52,11 @@ export function SolverClient() {
         typeof storedCourse?.value === "string" &&
         courseById.has(storedCourse.value)
           ? storedCourse.value
-          : DEFAULT_COURSE_ID;
+          : OPEN_COURSE_ID;
       const nextCourse = courseById.get(nextCourseId);
       const nextCovered =
         typeof storedCovered?.value === "string" &&
+        !isOpenCourse(nextCourseId) &&
         nextCourse?.topicOrder.includes(storedCovered.value)
           ? storedCovered.value
           : getDefaultCoveredUpTo(nextCourseId);
@@ -59,6 +65,7 @@ export function SolverClient() {
       setCourseId(nextCourseId);
       setCoveredUpTo(nextCovered);
       setLearnMode(storedLearnMode?.value === true);
+      if (isSubjectId(storedSubject?.value)) setSubject(storedSubject.value);
     });
   }, []);
 
@@ -96,11 +103,20 @@ export function SolverClient() {
     void setSetting("learnMode", checked);
   };
 
-  const solveProblem = (latex: string, source: Problem["source"]) => {
+  const changeSubject = (next: SubjectId) => {
+    setSubject(next);
+    void setSetting("subject", next);
+  };
+
+  const solveProblem = (
+    latex: string,
+    source: Problem["source"],
+    avoidMethod = "",
+  ) => {
     setView("solve");
     setProblem(latex);
     setLastSource(source);
-    void solve({ latex, source, courseId, coveredUpTo });
+    void solve({ latex, source, courseId, coveredUpTo, subject, avoidMethod });
   };
 
   const solveFromPhoto = (latex: string) => {
@@ -134,70 +150,78 @@ export function SolverClient() {
     <main
       id="main"
       tabIndex={-1}
-      className="mx-auto w-full outline-none max-w-7xl flex-1 px-4 py-8 sm:px-6"
+      className="relative w-full flex-1 outline-none"
     >
-      <div className="mb-7 space-y-2 print:hidden">
-        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-          Work through calculus, one step at a time.
-        </h1>
-        <p className="max-w-3xl text-muted-foreground">
-          Type a problem in plain English or LaTeX, photograph it, or write it
-          with Apple Pencil. CalcTutor will choose an allowed method for your
-          course and explain every move.
-        </p>
-      </div>
-
-      <Card className="mb-6 print:hidden">
-        <CardContent className="grid gap-5 py-5 lg:grid-cols-[1fr_auto] lg:items-end">
-          <CourseSelector
-            courseId={courseId}
-            coveredUpTo={coveredUpTo}
-            onCourseChange={changeCourse}
-            onCoveredUpToChange={changeCoveredUpTo}
-          />
-          <label className="flex items-center gap-3 rounded-lg border px-3 py-2">
-            <BookOpen className="size-4" />
-            <span className="text-sm font-medium">Learn mode</span>
-            <Switch
-              checked={learnMode}
-              onCheckedChange={changeLearnMode}
-              aria-label="Learn mode"
-            />
-          </label>
-        </CardContent>
-      </Card>
-
-      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] print:block">
-        <div className="space-y-6 print:hidden">
-          <ProblemInput
-            value={problem}
-            onChange={setProblem}
-            onSolve={() => solveProblem(problem, "text")}
-            isSolving={busy}
-          />
-          <PhotoInput
-            onSolve={solveFromPhoto}
-            onCheckWork={checkFromPhoto}
-            disabled={busy}
-          />
-          <CheckWorkInput
-            hasProblem={Boolean(problem.trim())}
-            disabled={busy}
-            onCheck={(studentWork) => checkProblemWork(problem, studentWork)}
-          />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-[34rem] bg-hero print:hidden"
+      />
+      <div className="relative mx-auto max-w-7xl px-4 pt-8 pb-12 sm:px-6 sm:pt-12">
+        <div className="mb-8 max-w-3xl space-y-3 print:hidden">
+          <p className="inline-flex items-center gap-2 rounded-full border bg-card/70 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
+            <span className="size-1.5 rounded-full bg-emerald-500" />
+            Every subject · Every step explained
+          </p>
+          <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
+            Snap, write or type <span className="text-brand">any problem.</span>
+          </h1>
+          <p className="max-w-2xl text-lg text-muted-foreground">
+            Step-by-step solutions for math from fractions to differential
+            equations, plus physics, chemistry and more, with graphs and checked
+            answers.
+          </p>
         </div>
 
-        <ResultPanel
-          ref={solutionSection}
-          view={view}
-          learnMode={learnMode}
-          courseId={courseId}
-          coveredUpTo={coveredUpTo}
-          solve={solveState}
-          checkWork={checkState}
-          onRetry={retry}
-          onShowSolution={(latex) => solveProblem(latex, lastSource)}
-        />
+        <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] print:block">
+          <div className="space-y-6 lg:sticky lg:top-20 print:hidden">
+            <Composer
+              value={problem}
+              onChange={setProblem}
+              onSolve={() => solveProblem(problem, "text")}
+              busy={busy}
+              subject={subject}
+              onSubjectChange={changeSubject}
+              learnMode={learnMode}
+              onLearnModeChange={changeLearnMode}
+              settings={
+                <CourseSelector
+                  courseId={courseId}
+                  coveredUpTo={coveredUpTo}
+                  onCourseChange={changeCourse}
+                  onCoveredUpToChange={changeCoveredUpTo}
+                />
+              }
+              onPhotoSolve={solveFromPhoto}
+              onPhotoCheckWork={checkFromPhoto}
+              onCheckWork={(studentWork) =>
+                checkProblemWork(problem, studentWork)
+              }
+            />
+            {!problem.trim() && (
+              <ExampleGallery
+                onPick={(example, exampleSubject) => {
+                  setProblem(example);
+                  changeSubject(exampleSubject);
+                }}
+              />
+            )}
+          </div>
+
+          <ResultPanel
+            ref={solutionSection}
+            view={view}
+            learnMode={learnMode}
+            courseId={courseId}
+            coveredUpTo={coveredUpTo}
+            solve={solveState}
+            checkWork={checkState}
+            onRetry={retry}
+            onShowSolution={(latex) => solveProblem(latex, lastSource)}
+            onSolveAnotherWay={(method) =>
+              solveProblem(solveState.solvedLatex, lastSource, method)
+            }
+          />
+        </div>
       </div>
     </main>
   );

@@ -56,12 +56,36 @@
     "coveredUpTo": "substitution"
   },
   {
+    "id": "quadratic",
+    "kind": "solve",
+    "name": "open course: quadratic factors to x = 2, 3",
+    "problemLatex": "x^{2}-5x+6=0",
+    "courseId": "open",
+    "coveredUpTo": "all"
+  },
+  {
+    "id": "eigenvalues",
+    "kind": "solve",
+    "name": "open course: linear algebra is solved",
+    "problemLatex": "\\text{Eigenvalues of } \\begin{pmatrix} 2 & 1 \\\\ 1 & 2 \\end{pmatrix}",
+    "courseId": "open",
+    "coveredUpTo": "all"
+  },
+  {
+    "id": "projectile",
+    "kind": "solve",
+    "name": "open course: physics keeps units",
+    "problemLatex": "A ball is thrown up at 12 m/s. How high does it go? Use g = 9.8 m/s².",
+    "courseId": "open",
+    "coveredUpTo": "all"
+  },
+  {
     "id": "out-of-scope",
     "kind": "solve",
-    "name": "linear algebra is out of scope",
-    "problemLatex": "Eigenvalues of a 2 × 2 matrix",
-    "courseId": "ualberta-math-144",
-    "coveredUpTo": "substitution"
+    "name": "a non-question is out of scope",
+    "problemLatex": "Pick my lottery numbers",
+    "courseId": "open",
+    "coveredUpTo": "all"
   },
   {
     "id": "transcribe-katex",

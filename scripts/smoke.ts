@@ -99,8 +99,22 @@ const solveChecks: Record<string, (solution: Solution) => boolean> = {
   "missing-bound": (s) =>
     s.status === "needs_clarification" &&
     includes(s.clarification_question, "upper bound"),
-  "out-of-scope": (s) =>
-    s.status === "out_of_scope" && includes(allText(s), "linear algebra"),
+  quadratic: (s) =>
+    s.status === "solved" &&
+    /x=2/.test(compact(s.final_answer.latex)) &&
+    /x=3/.test(compact(s.final_answer.latex)) &&
+    s.check.result === "passed",
+  eigenvalues: (s) =>
+    s.status === "solved" &&
+    s.problem.topic_id.startsWith("linear-algebra") &&
+    compact(s.final_answer.latex).includes("1") &&
+    compact(s.final_answer.latex).includes("3"),
+  projectile: (s) =>
+    s.status === "solved" &&
+    s.problem.topic_id.startsWith("physics") &&
+    includes(s.final_answer.latex, "7.3") &&
+    includes(s.final_answer.latex, "m"),
+  "out-of-scope": (s) => s.status === "out_of_scope",
 };
 
 // The transcription must be the exact integral, read with high confidence,
@@ -179,6 +193,8 @@ for (const problem of problems) {
           courseId: problem.courseId,
           coveredUpTo: problem.coveredUpTo,
           mode: "full",
+          subject: "auto",
+          avoidMethod: "",
         },
         { mockChunkDelayMs: 0 },
       )) {

@@ -75,6 +75,8 @@ export function AppHeader() {
                 key={href}
                 href={href}
                 aria-current={active ? "page" : undefined}
+                // The text label is hidden on phones; keep the link named.
+                aria-label={label}
                 className={cn(
                   buttonVariants({ variant: "ghost", size: "sm" }),
                   "rounded-full",

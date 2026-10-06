@@ -220,3 +220,33 @@
   the Geist font actually applied (`--font-sans` previously pointed at
   itself).
 - `npm run screenshots` now fails if a page is wider than the viewport.
+
+## 2026-10-06 — Built-in math engine (no AI)
+
+- Without an API key the app now solves many problems itself instead of
+  answering "no fixture". `lib/cas` reads the problem (`parse.ts`), solves it
+  with Algebrite (algebra, calculus, matrices) or nerdamer (limits only,
+  which Algebrite lacks), and writes the same `Solution` shape as the AI,
+  with named rules, explanations, common mistakes and three hints.
+- Both libraries have known gaps and bugs (nerdamer integrated `x ln x`
+  wrongly in testing; Algebrite has no `sec`). So every result is checked
+  numerically in TypeScript before it is shown: derivatives against central
+  differences, antiderivatives by differentiating back, definite integrals
+  against adaptive Simpson, roots by substitution, limits by values near the
+  point, eigenvalues by `det(A - λI) = 0`, inverses by `A·A⁻¹ = I`. A failed
+  check returns nothing, and the app says the problem needs the AI.
+- Steps follow the structure of the problem rather than a fixed template:
+  the derivative rule comes from the outermost operation (product, quotient,
+  chain, sum), integrals pick linearity, integration by parts (LIATE) or a
+  linear substitution, limits try substitution then L'Hôpital, quadratics
+  factor when the discriminant is a perfect square and use the formula
+  otherwise, and 2×2 and 3×3 systems use Cramer's rule.
+- Non-polynomial equations are solved numerically (sign change and
+  bisection), then exact values such as π/6, √2, e², ln 5 and fractions are
+  recognized; anything else is shown as a decimal.
+- Fixtures still win when they match, so the golden mock answers and the
+  e2e tests are unchanged. Engine answers report the model
+  `calctutor-math-engine` and are labelled "Solved offline by the built-in
+  math engine (no AI)".
+- `TopicDetail` was split out of the topic page so the static demo can render
+  topics without a server.

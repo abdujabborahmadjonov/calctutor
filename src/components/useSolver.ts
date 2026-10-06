@@ -28,6 +28,7 @@ export function useSolver() {
   const [error, setError] = useState("");
   const [storageWarning, setStorageWarning] = useState("");
   const [aiMode, setAiMode] = useState<"mock" | "anthropic">();
+  const [model, setModel] = useState("");
   const solving = useRef(false);
 
   const solve = async ({
@@ -103,6 +104,7 @@ export function useSolver() {
       setSolution(outcome.solution);
       setSolvedLatex(latex);
       setAiMode(outcome.source);
+      setModel(outcome.model);
     } catch (solveError) {
       console.error("[CalcTutor] Solve failed", solveError);
       setError(
@@ -126,5 +128,6 @@ export function useSolver() {
     error,
     storageWarning,
     aiMode,
+    model,
   };
 }

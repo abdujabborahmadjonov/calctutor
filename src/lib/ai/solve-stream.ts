@@ -4,7 +4,7 @@ import { env } from "@/lib/env";
 
 import { getAnthropicClient } from "./client";
 import { UpstreamError } from "./errors";
-import { getMockSolution } from "./mock";
+import { mockSolve } from "./mock";
 import { type SolveRequest, validateSolution } from "./schemas";
 import { buildSolveParams } from "./solve";
 import type { SolveStreamEvent } from "./stream-events";
@@ -20,9 +20,9 @@ async function* mockSolveStream(
 ): AsyncGenerator<SolveStreamEvent> {
   const startedAt = performance.now();
   console.warn("[CalcTutor] MOCK_AI=true; streaming a fixture solution");
-  yield { type: "start", source: "mock", model: "mock-fixture" };
+  const { solution, model } = mockSolve(request.problemLatex);
+  yield { type: "start", source: "mock", model };
 
-  const solution = getMockSolution(request.problemLatex);
   const text = JSON.stringify(solution);
 
   for (let offset = 0; offset < text.length; offset += MOCK_CHUNK_SIZE) {
@@ -33,7 +33,7 @@ async function* mockSolveStream(
   yield {
     type: "done",
     solution,
-    model: "mock-fixture",
+    model,
     usage: { inputTokens: 0, outputTokens: 0 },
     latencyMs: Math.round(performance.now() - startedAt),
     source: "mock",

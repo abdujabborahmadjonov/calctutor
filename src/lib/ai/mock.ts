@@ -13,6 +13,8 @@ import projectile from "@/fixtures/solutions/projectile.json";
 import quadratic from "@/fixtures/solutions/quadratic.json";
 import relatedRates from "@/fixtures/solutions/related-rates.json";
 
+import { LOCAL_MODEL, localSolve } from "@/lib/cas";
+
 import { validateSolution, type Solution } from "./schemas";
 
 const fixtures = {
@@ -30,7 +32,35 @@ const fixtures = {
   relatedRates: validateSolution(relatedRates),
 };
 
+export const FIXTURE_MODEL = "mock-fixture";
+
+// Mock mode: a saved fixture when one matches, otherwise the built-in math
+// engine, otherwise a clear message that this needs the AI tutor.
+export function mockSolve(problemLatex: string): {
+  solution: Solution;
+  model: string;
+} {
+  const fixture = fixtureFor(problemLatex);
+  if (fixture) return { solution: fixture, model: FIXTURE_MODEL };
+
+  const local = localSolve(problemLatex);
+  if (local) return { solution: validateSolution(local), model: LOCAL_MODEL };
+
+  return {
+    solution: {
+      ...fixtures.needsClarification,
+      clarification_question:
+        "The built-in math engine can't solve this one without AI. It handles equations, systems, arithmetic, simplifying and factoring, derivatives, integrals, limits, matrices, statistics and simple differential equations. Word problems, proofs and science questions need the AI tutor: set CALCTUTOR_ANTHROPIC_API_KEY and MOCK_AI=false.",
+    },
+    model: FIXTURE_MODEL,
+  };
+}
+
 export function getMockSolution(problemLatex: string): Solution {
+  return mockSolve(problemLatex).solution;
+}
+
+function fixtureFor(problemLatex: string): Solution | undefined {
   const problem = problemLatex.toLowerCase().replaceAll(/\s+/g, "");
 
   if (problem.includes("lottery")) return fixtures.outOfScope;
@@ -67,9 +97,5 @@ export function getMockSolution(problemLatex: string): Solution {
     return fixtures.limitSine;
   }
 
-  return {
-    ...fixtures.needsClarification,
-    clarification_question:
-      "Mock mode has no fixture for this problem. Try one of the examples or set MOCK_AI=false with an Anthropic API key.",
-  };
+  return undefined;
 }

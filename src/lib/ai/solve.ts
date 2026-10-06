@@ -7,7 +7,7 @@ import { env } from "@/lib/env";
 
 import { getAnthropicClient } from "./client";
 import { UpstreamError } from "./errors";
-import { getMockSolution } from "./mock";
+import { mockSolve } from "./mock";
 import { TUTOR_SYSTEM_PROMPT } from "./prompts/tutor";
 import {
   type Solution,
@@ -64,8 +64,7 @@ export async function solve(request: SolveRequest): Promise<SolveResult> {
   if (env.MOCK_AI) {
     console.warn("[CalcTutor] MOCK_AI=true; serving a fixture solution");
     return {
-      solution: getMockSolution(request.problemLatex),
-      model: "mock-fixture",
+      ...mockSolve(request.problemLatex),
       usage: { inputTokens: 0, outputTokens: 0 },
       latencyMs: Math.round(performance.now() - startedAt),
       source: "mock",

@@ -6,8 +6,11 @@
 
 import { latexToSympy } from "@/lib/verify/latexToSympy";
 
+export type MathNode = Node;
+
 type Node =
   | { type: "num"; value: number }
+  | { type: "const"; name: "pi" | "E" | "oo" }
   | { type: "var"; name: string }
   | { type: "neg"; arg: Node }
   | { type: "bin"; op: "+" | "-" | "*" | "/" | "^"; left: Node; right: Node }
@@ -228,9 +231,10 @@ function parse(tokens: Token[]): Node {
 
     if (token.kind === "num") return { type: "num", value: token.value };
     if (token.kind === "name") {
-      return token.value in CONSTANTS && token.value !== "e"
-        ? { type: "num", value: CONSTANTS[token.value] }
-        : { type: "var", name: token.value };
+      if (token.value === "pi" || token.value === "E" || token.value === "oo") {
+        return { type: "const", name: token.value };
+      }
+      return { type: "var", name: token.value };
     }
     if (token.kind === "func") {
       // "sin^2(x)" is sin(x)^2; "sin x" takes the next factor.
@@ -265,10 +269,15 @@ function factorial(value: number) {
   return result;
 }
 
-function evaluateNode(node: Node, scope: Record<string, number>): number {
+export function evaluateNode(
+  node: Node,
+  scope: Record<string, number>,
+): number {
   switch (node.type) {
     case "num":
       return node.value;
+    case "const":
+      return CONSTANTS[node.name];
     case "var":
       if (node.name in scope) return scope[node.name];
       // "e" is Euler's number unless it is the variable.
@@ -306,7 +315,10 @@ function evaluateNode(node: Node, scope: Record<string, number>): number {
   }
 }
 
-function variablesOf(node: Node, found = new Set<string>()): Set<string> {
+export function variablesOf(
+  node: Node,
+  found = new Set<string>(),
+): Set<string> {
   if (node.type === "var" && node.name !== "e") found.add(node.name);
   if (node.type === "neg" || node.type === "call" || node.type === "fact") {
     variablesOf(node.arg, found);
@@ -323,25 +335,21 @@ export type Compiled = {
   evaluate: (scope?: Record<string, number>) => number;
 };
 
-// Compiles plain or SymPy-style input.
-export function compilePlain(source: string): Compiled | undefined {
+// Parses plain or SymPy-style input into a tree.
+export function parsePlain(source: string): Node | undefined {
   const trimmed = source.trim();
   if (!trimmed) return undefined;
   try {
-    const tree = parse(tokenize(trimmed));
-    return {
-      variables: [...variablesOf(tree)].sort(),
-      evaluate: (scope = {}) => evaluateNode(tree, scope),
-    };
+    return parse(tokenize(trimmed));
   } catch (error) {
     if (error instanceof ParseError) return undefined;
     throw error;
   }
 }
 
-// Compiles LaTeX or plain input. LaTeX goes through latexToSympy first, so
+// Parses LaTeX or plain input. LaTeX goes through latexToSympy first, so
 // fractions, roots and trig in either notation work.
-export function compileMath(source: string): Compiled | undefined {
+export function parseMath(source: string): Node | undefined {
   const trimmed = source
     .trim()
     .replace(/^\$+|\$+$/g, "")
@@ -349,9 +357,31 @@ export function compileMath(source: string): Compiled | undefined {
   if (!trimmed) return undefined;
   if (/[\\{}]/.test(trimmed)) {
     const sympy = latexToSympy(trimmed);
-    return sympy ? compilePlain(sympy) : undefined;
+    return sympy ? parsePlain(sympy) : undefined;
   }
-  return compilePlain(trimmed);
+  return parsePlain(trimmed);
+}
+
+// Compiles plain or SymPy-style input.
+export function compilePlain(source: string): Compiled | undefined {
+  const tree = parsePlain(source);
+  return (
+    tree && {
+      variables: [...variablesOf(tree)].sort(),
+      evaluate: (scope = {}) => evaluateNode(tree, scope),
+    }
+  );
+}
+
+// Compiles LaTeX or plain input.
+export function compileMath(source: string): Compiled | undefined {
+  const tree = parseMath(source);
+  return (
+    tree && {
+      variables: [...variablesOf(tree)].sort(),
+      evaluate: (scope = {}) => evaluateNode(tree, scope),
+    }
+  );
 }
 
 // Splits "y = x^2", "f(x) = x^2" and "x^2" into the expression to graph.

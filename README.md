@@ -16,6 +16,12 @@ chemistry and other homework questions:
   limits, and the roots of one-variable equations).
 - Check my work, graded practice problems, Markdown and PDF export, a topic
   browser, and local history.
+- A built-in math engine (Algebrite, with nerdamer for limits) that solves
+  many problems with worked steps and no AI: equations and systems,
+  arithmetic, simplifying and factoring, derivatives, integrals, limits,
+  matrices, statistics and simple differential equations. It answers in mock
+  mode when no saved example matches, and every result is checked
+  numerically before it is shown.
 - Optional Alberta course mode for calculus: pick a course and how far your
   class has got, and only the methods covered so far are used. The default,
   "Any level · no restrictions", solves everything.
@@ -35,8 +41,9 @@ npm run dev
 ```
 
 Open http://localhost:3000. `.env.example` sets `MOCK_AI=true`, so the app
-serves saved example solutions and shows a "Mock mode" banner; no API key is
-needed. For real Claude answers, set these in `.env.local`:
+serves saved example solutions, solves other math problems with the built-in
+engine, and shows a "Mock mode" banner; no API key is needed. Word problems,
+proofs and science questions need the AI. For real Claude answers, set these in `.env.local`:
 
 ```
 CALCTUTOR_ANTHROPIC_API_KEY=sk-ant-...

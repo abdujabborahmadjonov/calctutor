@@ -250,6 +250,16 @@ const scenarios: Scenario[] = [
         .waitFor();
     },
   },
+  {
+    name: "offline-engine",
+    run: async (page) => {
+      await solve(page, String.raw`\frac{d}{dx}\left(\frac{x^2+1}{x-1}\right)`);
+      await page.getByRole("button", { name: "Show all" }).click();
+      await page.getByText(/Verified with SymPy|Could not verify/).waitFor({
+        timeout: 120_000,
+      });
+    },
+  },
   { name: "about", run: async (page) => void (await page.goto("/about")) },
   { name: "topics", run: async (page) => void (await page.goto("/topics")) },
   {

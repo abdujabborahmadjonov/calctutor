@@ -4,6 +4,7 @@ import { forwardRef } from "react";
 import { AlertTriangle } from "lucide-react";
 
 import type { Solution } from "@/lib/ai/schemas";
+import { LOCAL_MODEL } from "@/lib/cas/model";
 import type { PartialSolution } from "@/lib/client/partialSolution";
 
 import { CheckWorkResult } from "./CheckWorkResult";
@@ -29,6 +30,7 @@ type ResultPanelProps = {
     error: string;
     storageWarning: string;
     aiMode?: "mock" | "anthropic";
+    model?: string;
   };
   checkWork: { checked?: CheckWorkState; isChecking: boolean; error: string };
   onRetry: () => void;
@@ -85,7 +87,11 @@ export const ResultPanel = forwardRef<HTMLElement, ResultPanelProps>(
         aria-label="Solution"
       >
         {!showCheck && solve.aiMode === "mock" && solve.solution && (
-          <Badge variant="outline">Mock fixture response</Badge>
+          <Badge variant="outline">
+            {solve.model === LOCAL_MODEL
+              ? "Solved offline by the built-in math engine (no AI)"
+              : "Mock fixture response"}
+          </Badge>
         )}
         {error && <ErrorCard message={error} onRetry={onRetry} />}
         {!showCheck && solve.storageWarning && (

@@ -66,3 +66,32 @@ test("an algebra problem is solved, graphed and verified, and can be solved anot
 
   expect(errors).toEqual([]);
 });
+
+test("a problem with no saved example is solved by the built-in math engine", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+
+  await page.goto("/");
+  await page
+    .getByRole("textbox", { name: "Problem", exact: true })
+    .fill("x^3-6x^2+11x-6=0");
+  await page.getByRole("button", { name: "Solve problem" }).click();
+
+  await expect(
+    page.getByText("Solved offline by the built-in math engine (no AI)"),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Show all" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Final answer" }),
+  ).toBeVisible();
+  await expect(page.getByText(/Verified with SymPy/)).toBeVisible({
+    timeout: 120_000,
+  });
+
+  expect(errors).toEqual([]);
+});

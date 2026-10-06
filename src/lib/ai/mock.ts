@@ -84,16 +84,27 @@ function fixtureFor(problemLatex: string): Solution | undefined {
   if (problem.includes("\\sum") || problem.includes("(-1)^n")) {
     return fixtures.alternatingSeries;
   }
-  if (problem.includes("\\sqrt{1-x^{2}}") || problem.includes("sqrt(1-x")) {
+  const integral = /\\int|integra/.test(problem);
+  const derivative = /\\frac\{d\}|d\/dx|deriv|differentiat/.test(problem);
+  if (
+    integral &&
+    (problem.includes("\\sqrt{1-x^{2}}") || problem.includes("sqrt(1-x"))
+  ) {
     return fixtures.improperIntegral;
   }
-  if (problem.includes("xe^x") || problem.includes("xe^{x}")) {
+  if (integral && (problem.includes("xe^x") || problem.includes("xe^{x}"))) {
     return fixtures.integrationByParts;
   }
-  if (problem.includes("\\sin(3x)") || problem.includes("sin(3x)")) {
+  if (
+    derivative &&
+    (problem.includes("\\sin(3x)") || problem.includes("sin(3x)"))
+  ) {
     return fixtures.productChain;
   }
-  if (problem.includes("\\sinx}{x}") || problem.includes("sinx/x")) {
+  if (
+    problem.includes("lim") &&
+    (problem.includes("\\sinx}{x}") || problem.includes("sinx/x"))
+  ) {
     return fixtures.limitSine;
   }
 

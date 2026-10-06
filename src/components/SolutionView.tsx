@@ -1,27 +1,41 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Copy, ShieldCheck } from "lucide-react";
+import { Shuffle } from "lucide-react";
 
 import type { Solution } from "@/lib/ai/schemas";
+import { topicById } from "@/lib/curriculum/alberta";
+import { subjectForTopic } from "@/lib/subjects";
 
+import { AnswerCheck } from "./AnswerCheck";
+import { FinalAnswerCard } from "./FinalAnswerCard";
 import { HintLadder } from "./HintLadder";
-import { Markdown } from "./Markdown";
 import { Math } from "./Math";
+import { SolutionGraph } from "./SolutionGraph";
 import { StepCard } from "./StepCard";
-import { Badge } from "./ui/badge";
+import { StrategyCard } from "./StrategyCard";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 
 type SolutionViewProps = {
+  problemLatex: string;
   solution: Solution;
   learnMode: boolean;
+  courseId: string;
+  coveredUpTo: string;
+  onSolveAnotherWay?: (method: string) => void;
 };
 
-export function SolutionView({ solution, learnMode }: SolutionViewProps) {
+export function SolutionView({
+  problemLatex,
+  solution,
+  learnMode,
+  courseId,
+  coveredUpTo,
+  onSolveAnotherWay,
+}: SolutionViewProps) {
   const [solutionRevealed, setSolutionRevealed] = useState(!learnMode);
   const [visibleSteps, setVisibleSteps] = useState(1);
-  const [copied, setCopied] = useState(false);
 
   if (solution.status === "needs_clarification") {
     return (
@@ -45,7 +59,8 @@ export function SolutionView({ solution, learnMode }: SolutionViewProps) {
         <CardContent className="space-y-2">
           <p>{solution.clarification_question}</p>
           <p className="text-sm text-muted-foreground">
-            CalcTutor covers single-variable Calculus I and II.
+            CalcTutor solves math at every level, science, and other homework
+            and general-knowledge questions.
           </p>
         </CardContent>
       </Card>
@@ -54,30 +69,44 @@ export function SolutionView({ solution, learnMode }: SolutionViewProps) {
 
   const allStepsVisible = visibleSteps >= solution.steps.length;
 
-  const copyFinalAnswer = async () => {
-    await navigator.clipboard.writeText(solution.final_answer.latex);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1_500);
-  };
+  const subject =
+    subjectForTopic(solution.problem.topic_id) ??
+    (topicById.has(solution.problem.topic_id)
+      ? subjectForTopic("calculus")
+      : undefined);
 
   return (
     <div className="space-y-5">
-      <Card className="border-primary/20 bg-primary/[0.03]">
-        <CardHeader className="gap-3">
-          <Badge className="w-fit">Strategy</Badge>
-          <CardTitle>{solution.strategy.method}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4 text-sm">
-          <div>
-            <strong>Why it fits</strong>
-            <Markdown>{solution.strategy.why_this_method}</Markdown>
-          </div>
-          <div>
-            <strong>Other approaches</strong>
-            <Markdown>{solution.strategy.alternatives}</Markdown>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="rounded-3xl border bg-card p-5 shadow-sm">
+        <div className="mb-3 flex flex-wrap items-center gap-2 text-xs font-medium">
+          {subject && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-brand px-2.5 py-1 text-white">
+              <span aria-hidden>{subject.glyph}</span>
+              {subject.name}
+            </span>
+          )}
+          {solution.problem.problem_type && (
+            <span className="rounded-full bg-muted px-2.5 py-1 text-muted-foreground">
+              {solution.problem.problem_type}
+            </span>
+          )}
+          {onSolveAnotherWay && solution.strategy.method && (
+            <button
+              type="button"
+              className="ml-auto inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-foreground transition-colors hover:border-primary/40 hover:bg-accent print:hidden"
+              onClick={() => onSolveAnotherWay(solution.strategy.method)}
+            >
+              <Shuffle className="size-3.5" />
+              Solve another way
+            </button>
+          )}
+        </div>
+        <div className="overflow-x-auto text-lg">
+          <Math latex={solution.problem.restated_latex} display />
+        </div>
+      </div>
+
+      <StrategyCard strategy={solution.strategy} />
 
       <HintLadder
         hints={solution.hints}
@@ -88,6 +117,16 @@ export function SolutionView({ solution, learnMode }: SolutionViewProps) {
         }
       />
 
+      {!solutionRevealed && (
+        <div className="rounded-xl border p-4 print:hidden">
+          <AnswerCheck
+            expectedLatex={solution.final_answer.latex}
+            label="Try it yourself, then check your final answer"
+            allowReveal={false}
+          />
+        </div>
+      )}
+
       {solutionRevealed && (
         <>
           <div className="space-y-4">
@@ -96,6 +135,7 @@ export function SolutionView({ solution, learnMode }: SolutionViewProps) {
                 key={`${step.title}-${index}`}
                 step={step}
                 index={index}
+                explain={{ problemLatex, solution }}
               />
             ))}
           </div>
@@ -119,41 +159,17 @@ export function SolutionView({ solution, learnMode }: SolutionViewProps) {
           )}
 
           {allStepsVisible && (
-            <Card className="border-2 border-primary/30">
-              <CardHeader>
-                <div className="flex items-center justify-between gap-3">
-                  <CardTitle>Final answer</CardTitle>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    aria-label="Copy final answer LaTeX"
-                    onClick={copyFinalAnswer}
-                  >
-                    {copied ? <Check /> : <Copy />}
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="overflow-x-auto rounded-lg bg-muted/40 p-4">
-                  <Math latex={solution.final_answer.latex} display />
-                </div>
-                <p>{solution.final_answer.plain}</p>
-                {solution.final_answer.domain_notes && (
-                  <p className="text-sm text-muted-foreground">
-                    {solution.final_answer.domain_notes}
-                  </p>
-                )}
-                <div className="flex items-start gap-2 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-950 dark:bg-emerald-950/30 dark:text-emerald-100">
-                  <ShieldCheck className="mt-0.5 size-4 shrink-0" />
-                  <span>
-                    Self-checked by {solution.check.method}.{" "}
-                    {solution.check.detail}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
+            <FinalAnswerCard
+              solution={solution}
+              practice={{
+                problemLatex,
+                topicId: solution.problem.topic_id || coveredUpTo,
+                courseId,
+                coveredUpTo,
+              }}
+            />
           )}
+          {allStepsVisible && <SolutionGraph solution={solution} />}
         </>
       )}
     </div>

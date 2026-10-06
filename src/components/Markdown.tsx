@@ -6,24 +6,30 @@ import remarkMath from "remark-math";
 type MarkdownProps = {
   children: string;
   className?: string;
+  // Renders inside running text: no block wrapper, paragraphs as spans.
+  inline?: boolean;
 };
 
-export function Markdown({ children, className }: MarkdownProps) {
+export function Markdown({ children, className, inline }: MarkdownProps) {
+  const Wrapper = inline ? "span" : "div";
   return (
-    <div className={className}>
+    <Wrapper className={className}>
       <ReactMarkdown
         remarkPlugins={[remarkMath]}
         rehypePlugins={[
           [rehypeKatex, { output: "htmlAndMathml", trust: false }],
         ]}
         components={{
-          p: ({ children: content }: ComponentProps<"p">) => (
-            <p className="leading-7">{content}</p>
-          ),
+          p: ({ children: content }: ComponentProps<"p">) =>
+            inline ? (
+              <span>{content}</span>
+            ) : (
+              <p className="leading-7">{content}</p>
+            ),
         }}
       >
         {children}
       </ReactMarkdown>
-    </div>
+    </Wrapper>
   );
 }

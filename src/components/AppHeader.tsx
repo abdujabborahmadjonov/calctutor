@@ -2,14 +2,32 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { History, Moon, Sun } from "lucide-react";
+import { usePathname } from "next/navigation";
+import {
+  BookMarked,
+  History,
+  LineChart,
+  Moon,
+  Sparkles,
+  Sun,
+} from "lucide-react";
 
 import { getSetting, setSetting } from "@/lib/storage/history";
 
+import { cn } from "@/lib/utils";
+
 import { Button, buttonVariants } from "./ui/button";
+
+const LINKS = [
+  { href: "/", label: "Solve", icon: Sparkles },
+  { href: "/graph", label: "Graph", icon: LineChart },
+  { href: "/topics", label: "Topics", icon: BookMarked },
+  { href: "/history", label: "History", icon: History },
+];
 
 export function AppHeader() {
   const [dark, setDark] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     void getSetting("theme").then((stored) => {
@@ -31,25 +49,51 @@ export function AppHeader() {
   };
 
   return (
-    <header className="border-b bg-background/90 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-        <Link href="/" className="font-semibold tracking-tight">
-          CalcTutor
+    <header className="sticky top-0 z-40 border-b bg-background/75 backdrop-blur-xl print:hidden">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
+        <Link
+          href="/"
+          className="flex items-center gap-2 font-semibold tracking-tight"
+        >
+          <span
+            aria-hidden
+            className="grid size-8 place-items-center rounded-xl bg-brand text-base text-white shadow-md shadow-primary/30"
+          >
+            ∑
+          </span>
+          <span className="text-lg">CalcTutor</span>
         </Link>
         <nav
-          className="flex items-center gap-1"
+          className="flex items-center gap-0.5"
           aria-label="Primary navigation"
         >
-          <Link
-            href="/history"
-            className={buttonVariants({ variant: "ghost", size: "sm" })}
-          >
-            <History />
-            History
-          </Link>
+          {LINKS.map(({ href, label, icon: Icon }) => {
+            const active =
+              href === "/" ? pathname === "/" : pathname.startsWith(href);
+            return (
+              <Link
+                key={href}
+                href={href}
+                aria-current={active ? "page" : undefined}
+                // The text label is hidden on phones; keep the link named.
+                aria-label={label}
+                className={cn(
+                  buttonVariants({ variant: "ghost", size: "sm" }),
+                  "rounded-full",
+                  active && "bg-accent text-accent-foreground",
+                )}
+              >
+                <Icon />
+                <span className="hidden sm:inline">{label}</span>
+              </Link>
+            );
+          })}
           <Link
             href="/about"
-            className={buttonVariants({ variant: "ghost", size: "sm" })}
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "sm" }),
+              "hidden rounded-full md:inline-flex",
+            )}
           >
             About
           </Link>
@@ -57,6 +101,7 @@ export function AppHeader() {
             type="button"
             variant="ghost"
             size="icon-sm"
+            className="rounded-full"
             aria-label={dark ? "Use light theme" : "Use dark theme"}
             onClick={toggleTheme}
           >

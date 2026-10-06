@@ -1,10 +1,10 @@
 {
   "status": "out_of_scope",
-  "clarification_question": "Eigenvalues belong to linear algebra, which is outside CalcTutor's single-variable calculus scope.",
+  "clarification_question": "This isn't a question CalcTutor can work out. Ask a math, science, or homework question instead.",
   "problem": {
-    "restated_latex": "\\text{Find the eigenvalues of a }2\\times2\\text{ matrix}",
+    "restated_latex": "\\text{Pick my lottery numbers}",
     "topic_id": "",
-    "problem_type": "linear algebra"
+    "problem_type": "not a question"
   },
   "strategy": {
     "method": "",
@@ -20,7 +20,7 @@
   "check": {
     "method": "",
     "result": "not_applicable",
-    "detail": "No calculus solution was attempted."
+    "detail": "No solution was attempted."
   },
   "hints": []
 }

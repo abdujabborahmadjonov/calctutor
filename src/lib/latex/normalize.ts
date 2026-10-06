@@ -34,3 +34,14 @@ export function normalizeLatex(value: string): string {
     .replaceAll(String.raw`\dfrac`, String.raw`\frac`)
     .trim();
 }
+
+const MATH_WORDS =
+  /^(?:a?(?:sin|cos|tan|sec|csc|cot)h?|arc(?:sin|cos|tan)|log|exp|sqrt|abs|lim|max|min|det|mod)$/i;
+
+// Three or more words and no LaTeX: a sentence is shown as text, not
+// typeset as a row of italic variables.
+export function looksLikeProse(value: string) {
+  if (value.includes("\\")) return false;
+  const words = value.match(/[a-zA-Z]{3,}/g) ?? [];
+  return words.filter((word) => !MATH_WORDS.test(word)).length >= 3;
+}

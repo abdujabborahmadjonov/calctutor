@@ -1,0 +1,59 @@
+{
+  "status": "solved",
+  "clarification_question": "",
+  "problem": {
+    "restated_latex": "\\text{A ball is thrown up at } 12\\ \\text{m/s. Maximum height? } (g=9.8\\ \\text{m/s}^2)",
+    "topic_id": "physics.projectile-motion",
+    "problem_type": "Vertical projectile motion"
+  },
+  "strategy": {
+    "method": "Constant-acceleration kinematics",
+    "why_this_method": "At the top of its path the ball's velocity is zero. The equation $v^2=v_0^2-2gh$ links speeds and height without time, so it gives the height in one step.",
+    "alternatives": "You could find the time to the top with $v=v_0-gt$ and then use $h=v_0t-\\tfrac12gt^2$, or use energy conservation $\\tfrac12mv_0^2=mgh$; all give the same height."
+  },
+  "steps": [
+    {
+      "title": "List what is known and what is asked",
+      "rule": "Setting up a kinematics problem",
+      "latex": "v_{0}=12\\ \\text{m/s},\\quad v=0\\ \\text{(at the top)},\\quad a=-g=-9.8\\ \\text{m/s}^{2},\\quad h=\\,?",
+      "explanation": "Take up as positive, so gravity's acceleration is negative. The key physical fact is that the velocity is momentarily zero at the highest point.",
+      "common_mistake": "Using $a=+9.8$ with up as positive, which gives a negative height."
+    },
+    {
+      "title": "Choose the equation without time",
+      "rule": "Kinematic equation",
+      "latex": "v^{2}=v_{0}^{2}-2gh",
+      "explanation": "Time is neither given nor asked for, so the equation that leaves out $t$ is the most direct.",
+      "common_mistake": ""
+    },
+    {
+      "title": "Solve for the height",
+      "rule": "Rearranging an equation",
+      "latex": "h=\\frac{v_{0}^{2}-v^{2}}{2g}=\\frac{12^{2}-0}{2(9.8)}",
+      "explanation": "Move $2gh$ to one side and divide by $2g$. Units: $(\\text{m/s})^2$ divided by $\\text{m/s}^2$ leaves metres, as a height should.",
+      "common_mistake": ""
+    },
+    {
+      "title": "Evaluate",
+      "rule": "Arithmetic with significant figures",
+      "latex": "h=\\frac{144}{19.6}\\approx 7.3\\ \\text{m}",
+      "explanation": "The data have two significant figures, so the answer gets two.",
+      "common_mistake": ""
+    }
+  ],
+  "final_answer": {
+    "latex": "h \\approx 7.3\\ \\text{m}",
+    "plain": "About 7.3 metres above the launch point",
+    "domain_notes": "Air resistance is ignored."
+  },
+  "check": {
+    "method": "Energy conservation",
+    "result": "passed",
+    "detail": "$v_0^2/(2g)=144/19.6\\approx7.35$ m from $\\tfrac12mv_0^2=mgh$ agrees."
+  },
+  "hints": [
+    "What is special about the ball's velocity at the very top?",
+    "Use the kinematic equation that does not contain time.",
+    "At the top $v=0$, so $0=12^2-2(9.8)h$."
+  ]
+}

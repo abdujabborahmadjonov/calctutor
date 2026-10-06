@@ -5,6 +5,7 @@ import { Check, Copy } from "lucide-react";
 
 import type { Step } from "@/lib/ai/schemas";
 
+import { type ExplainContext, ExplainMore } from "./ExplainMore";
 import { Markdown } from "./Markdown";
 import { Math } from "./Math";
 import { Badge } from "./ui/badge";
@@ -14,9 +15,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 type StepCardProps = {
   step: Step;
   index: number;
+  explain?: ExplainContext;
 };
 
-export function StepCard({ step, index }: StepCardProps) {
+export function StepCard({ step, index, explain }: StepCardProps) {
   const [copied, setCopied] = useState(false);
 
   const copyLatex = async () => {
@@ -30,13 +32,14 @@ export function StepCard({ step, index }: StepCardProps) {
       <CardHeader className="gap-3">
         <div className="flex items-start justify-between gap-3">
           <CardTitle className="text-base">
-            <span className="mr-2 text-muted-foreground">{index + 1}.</span>
+            <span className="mr-2 text-muted-foreground">{index + 1}.</span>{" "}
             {step.title}
           </CardTitle>
           <Button
             type="button"
             variant="ghost"
             size="icon-sm"
+            className="print:hidden"
             aria-label={`Copy LaTeX for step ${index + 1}`}
             onClick={copyLatex}
           >
@@ -54,9 +57,11 @@ export function StepCard({ step, index }: StepCardProps) {
         <Markdown className="text-foreground/85">{step.explanation}</Markdown>
         {step.common_mistake && (
           <aside className="rounded-lg border border-amber-300/60 bg-amber-50 p-3 text-sm text-amber-950 dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-100">
-            <strong>Common mistake:</strong> {step.common_mistake}
+            <strong>Common mistake:</strong>{" "}
+            <Markdown inline>{step.common_mistake}</Markdown>
           </aside>
         )}
+        {explain && <ExplainMore {...explain} stepIndex={index} />}
       </CardContent>
     </Card>
   );

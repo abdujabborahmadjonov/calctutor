@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      # Mock mode: the build and the end-to-end test never need an API key.
+      - run: npm run build
+        env:
+          MOCK_AI: "true"
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+        env:
+          MOCK_AI: "true"

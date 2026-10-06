@@ -1,10 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import fixture from "@/fixtures/solutions/integration-by-parts.json";
+import transcription from "@/fixtures/transcriptions/problem-set-photo.json";
 
 import {
+  ExplainStepRequestSchema,
   SolutionSchema,
   SolveRequestSchema,
+  TranscribeRequestSchema,
+  TranscriptionSchema,
   validateSolution,
 } from "./schemas";
 
@@ -32,6 +36,35 @@ describe("AI schemas", () => {
     ).toThrow("exactly three hints");
   });
 
+  it("never shows a failed self-check as solved", () => {
+    const check = { ...fixture.check };
+    expect(() =>
+      validateSolution({ ...fixture, check: { ...check, result: "failed" } }),
+    ).toThrow("failed self-check");
+    // Conceptual questions have nothing to substitute back.
+    expect(
+      validateSolution({
+        ...fixture,
+        check: { ...check, result: "not_applicable" },
+      }).status,
+    ).toBe("solved");
+  });
+
+  it("defaults the subject and the method to avoid", () => {
+    const result = SolveRequestSchema.parse({
+      problemLatex: "x^2-5x+6=0",
+      courseId: "open",
+      coveredUpTo: "all",
+      mode: "full",
+    });
+
+    expect(result.subject).toBe("auto");
+    expect(result.avoidMethod).toBe("");
+    expect(
+      SolveRequestSchema.safeParse({ ...result, subject: "astrology" }).success,
+    ).toBe(false);
+  });
+
   it("bounds solve requests to 2,000 characters", () => {
     const result = SolveRequestSchema.safeParse({
       problemLatex: "x".repeat(2_001),
@@ -41,5 +74,53 @@ describe("AI schemas", () => {
     });
 
     expect(result.success).toBe(false);
+  });
+
+  it("accepts the transcription fixture and rejects unknown confidence", () => {
+    expect(TranscriptionSchema.parse(transcription).problems).toHaveLength(2);
+    expect(() =>
+      TranscriptionSchema.parse({
+        ...transcription,
+        problems: [{ ...transcription.problems[0], confidence: "certain" }],
+      }),
+    ).toThrow();
+  });
+
+  it("bounds transcribe requests to supported types and base64 data", () => {
+    expect(
+      TranscribeRequestSchema.safeParse({
+        mediaType: "image/heic",
+        data: "AAAA",
+      }).success,
+    ).toBe(false);
+    expect(
+      TranscribeRequestSchema.safeParse({
+        mediaType: "image/jpeg",
+        data: "not base64!",
+      }).success,
+    ).toBe(false);
+    expect(
+      TranscribeRequestSchema.safeParse({
+        mediaType: "image/jpeg",
+        data: "/9j/4AAQ",
+      }).success,
+    ).toBe(true);
+  });
+
+  it("requires a whole solution and a step index for explain-step", () => {
+    expect(
+      ExplainStepRequestSchema.safeParse({
+        problemLatex: "x",
+        solution: fixture,
+        stepIndex: 0,
+      }).success,
+    ).toBe(true);
+    expect(
+      ExplainStepRequestSchema.safeParse({
+        problemLatex: "x",
+        solution: fixture,
+        stepIndex: -1,
+      }).success,
+    ).toBe(false);
   });
 });

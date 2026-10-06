@@ -1,0 +1,10 @@
+{
+  "verdict": "error_found",
+  "first_error": {
+    "line_latex": "\\int xe^x\\,dx = xe^x + \\int e^x\\,dx",
+    "what_went_wrong": "The integral term was added instead of subtracted.",
+    "why": "The parts formula is $\\int u\\,dv = uv - \\int v\\,du$, with a minus sign before the remaining integral.",
+    "corrected_line_latex": "\\int xe^x\\,dx = xe^x - \\int e^x\\,dx"
+  },
+  "next_step_hint": "Keep the minus sign and evaluate the remaining integral of $e^x$."
+}

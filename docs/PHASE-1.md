@@ -40,17 +40,17 @@
 
 Final verification on 2026-10-02 (branch `cursor/phase-zero-scaffold-c182`):
 
-| Check | Exact result |
-| ----- | -------------- |
-| `npm run format:check` | Exit 0; all matched files use Prettier formatting |
-| `npm run lint` | Exit 0; ESLint reported no errors or warnings |
-| `npm run typecheck` | Exit 0; `tsc --noEmit` reported no errors |
-| `npm test` | Exit 0; Vitest 5.0.3: 7 test files, 18 tests passed |
-| `npm run build` | Exit 0; Next.js 16.3.8; routes `/`, `/history`, `/about`, `/api/health`, `/api/solve` |
-| Mock smoke | `MOCK_AI=true PORT=43127 npm run start` then `SMOKE_EXPECT_MODE=mock npm run smoke` — **8/8 passed**, `input_tokens=0`, `output_tokens=0`, `estimated_cost_usd=0.0000` |
-| Real-API smoke | **Not run** — `ANTHROPIC_API_KEY` is not set in this cloud environment (credential blocker). To run locally: `MOCK_AI=false`, set `ANTHROPIC_API_KEY`, start the server, then `SMOKE_EXPECT_MODE=anthropic npm run smoke`. |
-| Browser, desktop (1280×900) | Pass; solver page renders with header controls, problem input, and footer disclaimer (headless Chrome screenshot) |
-| Browser, mobile (390×844) | Pass; stacked layout; controls remain visible (headless Chrome screenshot) |
+| Check                       | Exact result                                                                                                                                                                                                               |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run format:check`      | Exit 0; all matched files use Prettier formatting                                                                                                                                                                          |
+| `npm run lint`              | Exit 0; ESLint reported no errors or warnings                                                                                                                                                                              |
+| `npm run typecheck`         | Exit 0; `tsc --noEmit` reported no errors                                                                                                                                                                                  |
+| `npm test`                  | Exit 0; Vitest 5.0.3: 7 test files, 18 tests passed                                                                                                                                                                        |
+| `npm run build`             | Exit 0; Next.js 16.3.8; routes `/`, `/history`, `/about`, `/api/health`, `/api/solve`                                                                                                                                      |
+| Mock smoke                  | `MOCK_AI=true PORT=43127 npm run start` then `SMOKE_EXPECT_MODE=mock npm run smoke` — **8/8 passed**, `input_tokens=0`, `output_tokens=0`, `estimated_cost_usd=0.0000`                                                     |
+| Real-API smoke              | **Not run** — `ANTHROPIC_API_KEY` is not set in this cloud environment (credential blocker). To run locally: `MOCK_AI=false`, set `ANTHROPIC_API_KEY`, start the server, then `SMOKE_EXPECT_MODE=anthropic npm run smoke`. |
+| Browser, desktop (1280×900) | Pass; solver page renders with header controls, problem input, and footer disclaimer (headless Chrome screenshot)                                                                                                          |
+| Browser, mobile (390×844)   | Pass; stacked layout; controls remain visible (headless Chrome screenshot)                                                                                                                                                 |
 
 Mock smoke output (fixture path, not Anthropic):
 

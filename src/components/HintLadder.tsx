@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Markdown } from "./Markdown";
 
 type HintLadderProps = {
   hints: string[];
@@ -16,7 +17,7 @@ export function HintLadder({ hints, onRevealSolution }: HintLadderProps) {
   if (hints.length === 0) return null;
 
   return (
-    <Card>
+    <Card className="print:hidden">
       <CardHeader>
         <CardTitle>Hint ladder</CardTitle>
         <p className="text-sm text-muted-foreground">
@@ -28,7 +29,7 @@ export function HintLadder({ hints, onRevealSolution }: HintLadderProps) {
           {hints.slice(0, visibleCount).map((hint, index) => (
             <li key={hint} className="rounded-lg bg-muted/50 p-3 text-sm">
               <strong className="mr-2">Hint {index + 1}</strong>
-              {hint}
+              <Markdown inline>{hint}</Markdown>
             </li>
           ))}
         </ol>

@@ -1,0 +1,120 @@
+[
+  {
+    "id": "sine-limit",
+    "kind": "solve",
+    "name": "sine limit avoids early L'Hôpital",
+    "problemLatex": "\\lim_{x \\to 0} \\frac{\\sin x}{x}",
+    "courseId": "ualberta-math-144",
+    "coveredUpTo": "limits"
+  },
+  {
+    "id": "product-chain",
+    "kind": "solve",
+    "name": "product and chain rules are separate",
+    "problemLatex": "\\frac{d}{dx}\\left[x^{2}\\sin(3x)\\right]",
+    "courseId": "ualberta-math-144",
+    "coveredUpTo": "transcendental-derivatives"
+  },
+  {
+    "id": "integration-by-parts",
+    "kind": "solve",
+    "name": "integration by parts includes constant and check",
+    "problemLatex": "\\int x e^{x}\\,dx",
+    "courseId": "ualberta-math-146",
+    "coveredUpTo": "parametric-polar"
+  },
+  {
+    "id": "improper-integral",
+    "kind": "solve",
+    "name": "endpoint singularity is treated as improper",
+    "problemLatex": "\\int_{0}^{1} \\frac{dx}{\\sqrt{1-x^{2}}}",
+    "courseId": "ualberta-math-146",
+    "coveredUpTo": "improper-integrals"
+  },
+  {
+    "id": "alternating-series",
+    "kind": "solve",
+    "name": "alternating harmonic series is conditional",
+    "problemLatex": "\\sum_{n=1}^{\\infty} \\frac{(-1)^{n}}{n}",
+    "courseId": "ualberta-math-146",
+    "coveredUpTo": "series-tests"
+  },
+  {
+    "id": "related-rates",
+    "kind": "solve",
+    "name": "ladder rate includes sign and direction",
+    "problemLatex": "Ladder: 5 m ladder, base slides away at 1 m/s, how fast is the top falling when the base is 3 m from the wall",
+    "courseId": "ualberta-math-144",
+    "coveredUpTo": "related-rates"
+  },
+  {
+    "id": "missing-bound",
+    "kind": "solve",
+    "name": "missing bound asks for clarification",
+    "problemLatex": "\\int x^{2} dx from 0 to (missing bound)",
+    "courseId": "ualberta-math-144",
+    "coveredUpTo": "substitution"
+  },
+  {
+    "id": "quadratic",
+    "kind": "solve",
+    "name": "open course: quadratic factors to x = 2, 3",
+    "problemLatex": "x^{2}-5x+6=0",
+    "courseId": "open",
+    "coveredUpTo": "all"
+  },
+  {
+    "id": "eigenvalues",
+    "kind": "solve",
+    "name": "open course: linear algebra is solved",
+    "problemLatex": "\\text{Eigenvalues of } \\begin{pmatrix} 2 & 1 \\\\ 1 & 2 \\end{pmatrix}",
+    "courseId": "open",
+    "coveredUpTo": "all"
+  },
+  {
+    "id": "projectile",
+    "kind": "solve",
+    "name": "open course: physics keeps units",
+    "problemLatex": "A ball is thrown up at 12 m/s. How high does it go? Use g = 9.8 m/s².",
+    "courseId": "open",
+    "coveredUpTo": "all"
+  },
+  {
+    "id": "out-of-scope",
+    "kind": "solve",
+    "name": "a non-question is out of scope",
+    "problemLatex": "Pick my lottery numbers",
+    "courseId": "open",
+    "coveredUpTo": "all"
+  },
+  {
+    "id": "transcribe-katex",
+    "kind": "transcribe",
+    "name": "KaTeX-rendered problem transcribes exactly",
+    "image": "scripts/fixtures/katex-x2-lnx.png",
+    "mediaType": "image/png"
+  },
+  {
+    "id": "transcribe-katex-rotated",
+    "kind": "transcribe",
+    "name": "rotated, JPEG-compressed copy transcribes exactly",
+    "image": "scripts/fixtures/katex-x2-lnx-rotated.jpg",
+    "mediaType": "image/jpeg"
+  },
+  {
+    "id": "transcribe-handwritten",
+    "kind": "transcribe",
+    "name": "handwriting-font problem transcribes exactly",
+    "image": "scripts/fixtures/handwritten-x2-lnx.jpg",
+    "mediaType": "image/jpeg"
+  },
+  {
+    "id": "check-work-parts-sign",
+    "kind": "check-work",
+    "name": "check my work finds the parts sign error and withholds the answer",
+    "problemLatex": "\\int x e^{x}\\,dx",
+    "studentWork": "u = x,\\quad dv = e^{x}\\,dx\ndu = dx,\\quad v = e^{x}\n\\int x e^{x}\\,dx = x e^{x} + \\int e^{x}\\,dx\n= x e^{x} + e^{x} + C",
+    "courseId": "ualberta-math-146",
+    "coveredUpTo": "parametric-polar"
+  }
+]

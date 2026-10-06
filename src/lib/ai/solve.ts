@@ -7,7 +7,7 @@ import { env } from "@/lib/env";
 
 import { getAnthropicClient } from "./client";
 import { UpstreamError } from "./errors";
-import { getMockSolution } from "./mock";
+import { mockSolve } from "./mock";
 import { TUTOR_SYSTEM_PROMPT } from "./prompts/tutor";
 import {
   type Solution,
@@ -15,7 +15,7 @@ import {
   type SolveRequest,
   validateSolution,
 } from "./schemas";
-import { assertTokenBudget, recordTokenUsage } from "./usage";
+import { assertTokenBudget, logUsage } from "./usage";
 
 export type SolveResult = {
   solution: Solution;
@@ -25,14 +25,46 @@ export type SolveResult = {
   source: "mock" | "anthropic";
 };
 
+export function buildSolveUserMessage(course: string, request: SolveRequest) {
+  const avoid = request.avoidMethod
+    ? `\n<avoid_method>${request.avoidMethod}</avoid_method>`
+    : "";
+  return `${course}\n<subject>${request.subject}</subject>\n<mode>${request.mode}</mode>${avoid}\n<problem>\n${request.problemLatex}\n</problem>`;
+}
+
+export function buildSolveParams(request: SolveRequest, maxTokens: number) {
+  const course = buildCourseBlock(request.courseId, request.coveredUpTo);
+
+  return {
+    model: env.ANTHROPIC_MODEL_SOLVE,
+    max_tokens: maxTokens,
+    system: [
+      {
+        type: "text" as const,
+        text: TUTOR_SYSTEM_PROMPT,
+        cache_control: { type: "ephemeral" as const },
+      },
+    ],
+    messages: [
+      {
+        role: "user" as const,
+        content: buildSolveUserMessage(course, request),
+      },
+    ],
+    output_config: {
+      effort: "high" as const,
+      format: zodOutputFormat(SolutionSchema),
+    },
+  };
+}
+
 export async function solve(request: SolveRequest): Promise<SolveResult> {
   const startedAt = performance.now();
 
   if (env.MOCK_AI) {
     console.warn("[CalcTutor] MOCK_AI=true; serving a fixture solution");
     return {
-      solution: getMockSolution(request.problemLatex),
-      model: "mock-fixture",
+      ...mockSolve(request.problemLatex),
       usage: { inputTokens: 0, outputTokens: 0 },
       latencyMs: Math.round(performance.now() - startedAt),
       source: "mock",
@@ -41,32 +73,20 @@ export async function solve(request: SolveRequest): Promise<SolveResult> {
 
   assertTokenBudget();
   const client = getAnthropicClient();
-  const course = buildCourseBlock(request.courseId, request.coveredUpTo);
   let maxTokens = 8_000;
 
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
-      const response = await client.messages.parse({
-        model: env.ANTHROPIC_MODEL_SOLVE,
-        max_tokens: maxTokens,
-        system: [
-          {
-            type: "text",
-            text: TUTOR_SYSTEM_PROMPT,
-            cache_control: { type: "ephemeral" },
-          },
-        ],
-        messages: [
-          {
-            role: "user",
-            content: `${course}\n<mode>${request.mode}</mode>\n<problem>\n${request.problemLatex}\n</problem>`,
-          },
-        ],
-        output_config: {
-          effort: "high",
-          format: zodOutputFormat(SolutionSchema),
-        },
-      });
+      const response = await client.messages.parse(
+        buildSolveParams(request, maxTokens),
+      );
+      // Every finished attempt counts, including a truncated or refused one.
+      logUsage(
+        "solve",
+        response.model,
+        response.usage,
+        Math.round(performance.now() - startedAt),
+      );
 
       if (response.stop_reason === "max_tokens") {
         if (attempt === 0) {
@@ -97,24 +117,15 @@ export async function solve(request: SolveRequest): Promise<SolveResult> {
       }
 
       const solution = validateSolution(response.parsed_output);
-      const inputTokens = response.usage.input_tokens;
-      const outputTokens = response.usage.output_tokens;
       const latencyMs = Math.round(performance.now() - startedAt);
-
-      recordTokenUsage(inputTokens, outputTokens);
-      console.info("[CalcTutor] AI usage", {
-        route: "solve",
-        model: response.model,
-        inputTokens,
-        outputTokens,
-        cacheReadTokens: response.usage.cache_read_input_tokens ?? 0,
-        latencyMs,
-      });
 
       return {
         solution,
         model: response.model,
-        usage: { inputTokens, outputTokens },
+        usage: {
+          inputTokens: response.usage.input_tokens,
+          outputTokens: response.usage.output_tokens,
+        },
         latencyMs,
         source: "anthropic",
       };
